@@ -1,0 +1,50 @@
+services:
+
+  postgres:
+    image: postgres:15.6-alpine3.19
+    container_name: prod-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "123456"
+      TZ: Asia/Shanghai
+    volumes:
+      - ./volumes/postgres/data:/var/lib/postgresql/data
+      - ./volumes/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.2.4-alpine3.19
+    container_name: prod-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command:
+      [
+        "redis-server",
+        "--requirepass",
+        "123456",
+        "--appendonly",
+        "yes"
+      ]
+    volumes:
+      - ./volumes/redis/data:/data
+
+  rabbitmq:
+    image: rabbitmq:3.13.3-management-alpine
+    container_name: prod-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - ./volumes/rabbitmq/data:/var/lib/rabbitmq

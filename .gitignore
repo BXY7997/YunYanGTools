@@ -1,0 +1,136 @@
+#################################################
+# Node / Frontend (React / Vue / Next / Vite)
+#################################################
+
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# build output
+dist/
+build/
+.next/
+out/
+.nuxt/
+.svelte-kit/
+
+# logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# coverage
+coverage/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# cache
+.cache/
+.parcel-cache/
+.vite/
+.eslintcache
+
+#################################################
+# Python / FastAPI
+#################################################
+
+# Byte-compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# virtual environments
+venv/
+env/
+.venv/
+
+# distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# mypy
+.mypy_cache/
+
+# celery
+celerybeat-schedule
+
+# database
+*.sqlite3
+*.db
+
+#################################################
+# Environment Variables
+#################################################
+
+.env
+.env.*
+!.env.example
+
+#################################################
+# Docker
+#################################################
+
+docker-compose.override.yml
+*.tar
+
+#################################################
+# IDE
+#################################################
+
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+#################################################
+# OS
+#################################################
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+#################################################
+# Misc
+#################################################
+
+*.swp
+*.seed
+*.pid
+pids/
+
+#################################################
+# Package Managers
+#################################################
+
+# Uncomment if needed
+# poetry.lock
+# Pipfile.lock
+
+#################################################
+# Temporary files
+#################################################
+
+tmp/
+temp/
+
+
+#################################################
+# 待提交
+#################################################
+taxonomy/
