@@ -34,7 +34,7 @@ import {
   MarketingNavPillInner,
 } from "@/components/marketing/marketing-nav-pill"
 import { CTASection } from "@/components/sections/cta"
-import { BlurFade } from "@/registry/magicui/blur-fade"
+import { BlurFade } from "@/components/magicui/blur-fade"
 
 export const metadata: Metadata = createMarketingMetadata({
   title: "帮助中心",

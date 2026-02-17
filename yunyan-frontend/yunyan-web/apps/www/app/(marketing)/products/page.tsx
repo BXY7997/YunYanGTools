@@ -33,8 +33,8 @@ import {
 } from "@/components/marketing/marketing-nav-pill"
 import { CTASection } from "@/components/sections/cta"
 import { ShowcaseCard } from "@/components/sections/showcase"
-import { BlurFade } from "@/registry/magicui/blur-fade"
-import { Marquee } from "@/registry/magicui/marquee"
+import { BlurFade } from "@/components/magicui/blur-fade"
+import { Marquee } from "@/components/magicui/marquee"
 
 export const metadata: Metadata = createMarketingMetadata({
   title: "核心产品列表",

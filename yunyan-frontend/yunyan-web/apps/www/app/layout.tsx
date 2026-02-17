@@ -32,7 +32,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning className="layout-fixed">
+    <html
+      lang="zh-CN"
+      suppressHydrationWarning
+      className="layout-fixed"
+      data-scroll-behavior="smooth"
+    >
       <head />
       <body
         className={cn(

@@ -26,7 +26,7 @@ import {
   MarketingNavPillInner,
 } from "@/components/marketing/marketing-nav-pill"
 import { CTASection } from "@/components/sections/cta"
-import { BlurFade } from "@/registry/magicui/blur-fade"
+import { BlurFade } from "@/components/magicui/blur-fade"
 
 const LAST_UPDATED = "2026-02-16"
 

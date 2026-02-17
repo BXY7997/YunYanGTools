@@ -15,6 +15,7 @@ if (typeof window !== "undefined" && isPosthogEnabled) {
   posthogClient.init(posthogToken, {
     api_host: "https://app.posthog.com",
     capture_pageview: true,
+    persistence: "memory",
     session_recording: {
       maskAllInputs: false,
     },

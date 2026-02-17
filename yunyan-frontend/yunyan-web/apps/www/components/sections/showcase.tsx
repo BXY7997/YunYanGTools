@@ -5,7 +5,7 @@ import { ChevronRightIcon } from "@radix-ui/react-icons"
 import { CTA_LINK } from "@/lib/cta-map"
 import { PRODUCT_DETAILS } from "@/lib/product-catalog"
 import { cn } from "@/lib/utils"
-import { Marquee } from "@/registry/magicui/marquee"
+import { Marquee } from "@/components/magicui/marquee"
 
 function isExternalHref(href: string) {
   try {

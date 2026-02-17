@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import dynamic from "next/dynamic"
 import type { Organization, WebSite, WithContext } from "schema-dts"
 
 import { siteConfig } from "@/config/site"
@@ -8,7 +9,15 @@ import { CTASection } from "@/components/sections/cta"
 import { Hero } from "@/components/sections/hero"
 import { Showcase } from "@/components/sections/showcase"
 import { Testimonials } from "@/components/sections/testimonials"
-import { VideoTestimonials } from "@/components/sections/video-testimonials"
+import { VideoTestimonialsSkeleton } from "@/components/marketing/section-skeletons"
+
+const VideoTestimonials = dynamic(
+  () =>
+    import("@/components/sections/video-testimonials").then(
+      (mod) => mod.VideoTestimonials
+    ),
+  { ssr: true, loading: () => <VideoTestimonialsSkeleton /> }
+)
 
 const HOME_DESCRIPTION =
   "云衍 YunYan 面向高校与企业场景，提供 Canvas、Code、Slides、Studio 四大 AI 产品能力，帮助团队从想法到交付实现一体化落地。"

@@ -37,7 +37,7 @@ import {
 import { ProductDetailToc } from "@/components/products/product-detail-toc"
 import { ProductSelectedPlanHint } from "@/components/products/product-selected-plan-hint"
 import { CTASection } from "@/components/sections/cta"
-import { BlurFade } from "@/registry/magicui/blur-fade"
+import { BlurFade } from "@/components/magicui/blur-fade"
 
 export const dynamicParams = false
 

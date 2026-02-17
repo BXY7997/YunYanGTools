@@ -23,8 +23,8 @@ import {
 } from "@/components/marketing/marketing-nav-pill"
 import { PricingSelectedProductHint } from "@/components/marketing/pricing-selected-product-hint"
 import { CTASection } from "@/components/sections/cta"
-import { AnimatedShinyText } from "@/registry/magicui/animated-shiny-text"
-import { BlurFade } from "@/registry/magicui/blur-fade"
+import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text"
+import { BlurFade } from "@/components/magicui/blur-fade"
 
 export const metadata: Metadata = createMarketingMetadata({
   title: "价格与套餐",

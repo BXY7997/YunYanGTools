@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { RippleButton } from "@/registry/magicui/ripple-button"
+import { RippleButton } from "@/components/magicui/ripple-button"
 
 const SHOW_AFTER_SCROLL_Y = 360
 const MOBILE_BASE_OFFSET = 24

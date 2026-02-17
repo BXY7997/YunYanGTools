@@ -425,6 +425,7 @@
     @apply bg-background text-foreground overscroll-none;
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
+    font-display: swap;
   }
 
   html {
