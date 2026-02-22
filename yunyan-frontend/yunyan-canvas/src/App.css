@@ -96,3 +96,45 @@ html {
 .dark .glass {
   @apply bg-black/30 border-white/10;
 }
+
+@layer components {
+  .home-section-spacing {
+    @apply py-14 sm:py-16 lg:py-20;
+  }
+
+  .home-section-spacing-compact {
+    @apply py-10 sm:py-12 lg:py-14;
+  }
+
+  .home-section-title {
+    @apply text-3xl md:text-4xl lg:text-[2.65rem] font-bold tracking-tight leading-[1.08];
+  }
+
+  .home-section-subtitle {
+    @apply text-base md:text-lg text-muted-foreground leading-relaxed;
+  }
+
+  .home-accent-text {
+    @apply bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 bg-clip-text text-transparent;
+  }
+
+  .home-body-copy {
+    @apply text-sm md:text-base leading-7 text-muted-foreground;
+  }
+
+  .home-card-surface {
+    @apply rounded-2xl border border-border/70 bg-card/80 shadow-sm backdrop-blur-sm;
+  }
+
+  .home-card-surface-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-md;
+  }
+
+  .home-panel-soft {
+    @apply rounded-2xl border border-border/70 bg-gradient-to-br from-muted/55 via-background/95 to-muted/30;
+  }
+
+  .home-kicker {
+    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/80;
+  }
+}

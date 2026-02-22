@@ -2,10 +2,21 @@
 
 import React, { useState } from "react";
 
-import { Share2, Users } from "lucide-react";
+import { Share2, Users, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { type Project } from "@/components/dashboard/project-card";
 import { ProjectList } from "@/components/dashboard/project-list";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
 const sharedProjects: Project[] = [
@@ -23,9 +34,17 @@ const sharedProjects: Project[] = [
 
 export default function SharedPage() {
   const [projects, setProjects] = useState<Project[]>(sharedProjects);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
-  const handleDelete = (id: string) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
+  const handleDeleteConfirm = () => {
+    if (projectToDelete) {
+      setProjects(prev => prev.filter(p => p.id !== projectToDelete));
+      toast.success("协作项目已移除", {
+        description: "您已退出该共享项目的协作。",
+        icon: <Trash2 className="size-4" />,
+      });
+      setProjectToDelete(null);
+    }
   };
 
   return (
@@ -36,16 +55,33 @@ export default function SharedPage() {
             <Share2 className="size-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">共享协作</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">共享协作</h1>
             <p className="text-sm text-muted-foreground">您参与协作的团队项目。</p>
           </div>
         </div>
-        <Badge variant="secondary" className="px-3 py-1 text-xs font-medium flex items-center gap-2">
+        <Badge variant="secondary" className="px-3 py-1 text-xs font-bold flex items-center gap-2 bg-muted/50 border-none">
           <Users className="size-3" /> 2 个活跃团队
         </Badge>
       </div>
 
-      <ProjectList projects={projects} onDelete={handleDelete} />
+      <ProjectList projects={projects} onDelete={setProjectToDelete} />
+
+      <AlertDialog open={!!projectToDelete} onOpenChange={(open) => !open && setProjectToDelete(null)}>
+        <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl bg-background/80 backdrop-blur-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-black italic uppercase tracking-tight">确定要退出协作吗？</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm font-medium">
+              退出后您将无法再访问该项目的源码及协作控制台。此操作不可撤销。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel className="rounded-xl border-2 font-bold h-11">取消</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90 text-white rounded-xl font-bold h-11 shadow-lg shadow-destructive/20 border-none">
+              确认退出
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -19,14 +19,42 @@ export const InfiniteMovingCards = ({
 }) => {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const scrollerRef = React.useRef<HTMLUListElement>(null);
-
-  useEffect(() => {
-    addAnimation();
-  }, []);
+  const hasDuplicatedRef = React.useRef(false);
 
   const [start, setStart] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncPreference = () => setPrefersReducedMotion(media.matches);
+    syncPreference();
+
+    if (media.addEventListener) {
+      media.addEventListener("change", syncPreference);
+      return () => media.removeEventListener("change", syncPreference);
+    }
+    media.addListener(syncPreference);
+    return () => media.removeListener(syncPreference);
+  }, []);
+
+  useEffect(() => {
+    getDirection();
+    getSpeed();
+  }, [direction, speed]);
+
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setStart(false);
+      return;
+    }
+
+    addAnimation();
+  }, [prefersReducedMotion]);
 
   function addAnimation() {
+    if (hasDuplicatedRef.current) return;
     if (containerRef.current && scrollerRef.current) {
       const scrollerContent = Array.from(scrollerRef.current.children);
 
@@ -39,6 +67,7 @@ export const InfiniteMovingCards = ({
 
       getDirection();
       getSpeed();
+      hasDuplicatedRef.current = true;
       setStart(true);
     }
   }
@@ -75,30 +104,32 @@ export const InfiniteMovingCards = ({
     <div
       ref={containerRef}
       className={cn(
-        "scroller relative z-20 max-w-7xl overflow-hidden  [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)]",
+        "scroller relative z-20 max-w-7xl",
+        prefersReducedMotion
+          ? "overflow-visible"
+          : "overflow-hidden [mask-image:linear-gradient(to_right,transparent,white_20%,white_80%,transparent)]",
         className
       )}
     >
       <ul
         ref={scrollerRef}
         className={cn(
-          "flex min-w-full shrink-0 gap-4 py-1 w-max flex-nowrap",
+          "flex min-w-full gap-4 py-1",
+          prefersReducedMotion
+            ? "w-full flex-wrap justify-center"
+            : "w-max shrink-0 flex-nowrap",
           start && "animate-scroll",
           pauseOnHover && "hover:[animation-play-state:paused]"
         )}
       >
         {items.map((item, idx) => (
           <li
-            className="w-[160px] max-w-full relative rounded-xl border border-b-0 flex-shrink-0 border-slate-700/20 px-4 py-2 md:w-[200px]"
-            style={{
-              background:
-                "linear-gradient(180deg, var(--slate-800), var(--slate-900)",
-            }}
+            className="home-card-surface home-card-surface-hover relative w-[160px] max-w-full flex-shrink-0 px-4 py-2.5 md:w-[200px]"
             key={item.name + idx}
           >
-            <div className="flex items-center gap-3 text-muted-foreground/80">
-                {item.icon}
-                <span className="text-sm font-semibold">{item.name}</span>
+            <div className="flex items-center gap-3">
+              <div className="text-primary/90">{item.icon}</div>
+              <span className="text-sm font-semibold text-foreground/90">{item.name}</span>
             </div>
           </li>
         ))}

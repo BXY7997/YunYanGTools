@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 
 import { DashedLine } from "../dashed-line";
+import { Reveal } from "../reveal";
 
 import { cn } from "@/lib/utils";
 
@@ -115,45 +118,48 @@ export const ResourceAllocation = () => {
   return (
     <section
       id="resource-allocation"
-      className="overflow-hidden pb-28 lg:pb-32"
+      className="overflow-hidden py-12 lg:py-16"
     >
-      <div className="">
-        <h2 className="container text-center text-3xl tracking-tight text-balance sm:text-4xl md:text-5xl lg:text-6xl">
+      <div className="container max-w-7xl">
+        <h2 className="text-center text-3xl tracking-tight text-balance sm:text-4xl md:text-5xl lg:text-6xl font-black">
           简单四步，开启高效开发之旅
         </h2>
 
         <div className="mt-8 md:mt-12 lg:mt-20">
           <DashedLine
             orientation="horizontal"
-            className="container scale-x-105"
+            className="scale-x-105"
           />
 
           {/* Top Features Grid - 2 items */}
-          <div className="relative container flex max-md:flex-col">
+          <div className="relative flex max-md:flex-col">
             {topItems.map((item, i) => (
-              <Item key={i} item={item} isLast={i === topItems.length - 1} />
+              <Reveal key={i} direction={i % 2 === 0 ? "left" : "right"} delay={i * 0.1} className="flex-1">
+                <Item item={item} isLast={i === topItems.length - 1} />
+              </Reveal>
             ))}
           </div>
           <DashedLine
             orientation="horizontal"
-            className="container max-w-7xl scale-x-110"
+            className="scale-x-110"
           />
 
           {/* Bottom Features Grid - 3 items */}
-          <div className="relative container grid max-w-7xl md:grid-cols-3">
+          <div className="relative grid md:grid-cols-3">
             {bottomItems.map((item, i) => (
-              <Item
-                key={i}
-                item={item}
-                isLast={i === bottomItems.length - 1}
-                className="md:pb-0"
-              />
+              <Reveal key={i} direction={i % 2 === 0 ? "left" : "right"} delay={i * 0.1}>
+                <Item
+                  item={item}
+                  isLast={i === bottomItems.length - 1}
+                  className="md:pb-0"
+                />
+              </Reveal>
             ))}
           </div>
         </div>
         <DashedLine
           orientation="horizontal"
-          className="container max-w-7xl scale-x-110"
+          className="scale-x-110"
         />
       </div>
     </section>
@@ -199,6 +205,7 @@ const Item = ({ item, isLast, className }: ItemProps) => {
                     width={image.width}
                     height={image.height}
                     className="object-contain object-left-top"
+                    style={{ width: "auto", height: "auto" }}
                   />
                   <div className="from-muted/80 absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l to-transparent" />
                 </div>
@@ -217,6 +224,7 @@ const Item = ({ item, isLast, className }: ItemProps) => {
                     width={image.width}
                     height={image.height}
                     className="object-contain object-left-top"
+                    style={{ width: "auto", height: "auto" }}
                   />
                   <div className="from-muted absolute inset-y-0 bottom-0 left-0 z-10 w-14 bg-linear-to-r to-transparent" />
                 </div>
@@ -234,6 +242,7 @@ const Item = ({ item, isLast, className }: ItemProps) => {
               width={image.width}
               height={image.height}
               className="object-contain object-left-top"
+              style={{ width: "auto", height: "auto" }}
             />
           ))}
         </div>

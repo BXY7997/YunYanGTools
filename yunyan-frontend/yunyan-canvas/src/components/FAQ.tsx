@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { SectionHeader } from "@/components/home/SectionHeader";
 
 interface FAQProps {
   question: string;
@@ -48,40 +49,51 @@ export const FAQ = () => {
   return (
     <section
       id="faq"
-      className="container py-12 sm:py-16"
+      className="container home-section-spacing"
     >
-      <h2 className="text-3xl md:text-4xl font-bold mb-4">
-        常见{" "}
-        <span className="bg-gradient-to-b from-primary/60 to-primary text-transparent bg-clip-text">
-          问题解答
-        </span>
-      </h2>
+      <SectionHeader
+        align="left"
+        className="mb-8"
+        title={(
+          <>
+            常见{" "}
+            <span className="home-accent-text">
+              问题解答
+            </span>
+          </>
+        )}
+        subtitle="围绕 AI 生成、数据安全、协作模式和导出能力的高频问题，我们整理了最常见答案。"
+        subtitleClassName="home-body-copy"
+      />
 
-      <Accordion
-        type="single"
-        collapsible
-        className="w-full AccordionRoot"
-      >
-        {FAQList.map(({ question, answer, value }: FAQProps) => (
-          <AccordionItem
-            key={value}
-            value={value}
-          >
-            <AccordionTrigger className="text-left">
-              {question}
-            </AccordionTrigger>
+      <div className="home-card-surface w-full px-6 sm:px-8">
+        <Accordion
+          type="single"
+          collapsible
+          className="AccordionRoot w-full"
+        >
+          {FAQList.map(({ question, answer, value }: FAQProps) => (
+            <AccordionItem
+              key={value}
+              value={value}
+              className="border-border/70"
+            >
+              <AccordionTrigger className="py-5 text-left text-base font-semibold leading-7 hover:no-underline">
+                {question}
+              </AccordionTrigger>
 
-            <AccordionContent>{answer}</AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+              <AccordionContent className="text-sm leading-7">{answer}</AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
 
-      <h3 className="font-medium mt-4">
+      <h3 className="mt-6 text-sm font-medium text-muted-foreground">
         还有其他问题？{" "}
         <a
           rel="noreferrer noopener"
           href="#"
-          className="text-primary transition-all border-primary hover:border-b-2"
+          className="border-primary font-semibold text-primary transition-all hover:border-b-2"
         >
           加入我们的社区
         </a>

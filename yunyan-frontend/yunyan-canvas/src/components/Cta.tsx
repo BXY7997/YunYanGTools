@@ -1,34 +1,43 @@
 import { Button } from "./ui/button";
+import { SectionHeader } from "@/components/home/SectionHeader";
 
 export const Cta = () => {
   return (
     <section
       id="cta"
-      className="bg-muted/50 py-12 my-12 sm:my-16"
+      className="home-section-spacing"
     >
-      <div className="container lg:grid lg:grid-cols-2 place-items-center">
-        <div className="lg:col-start-1">
-          <h2 className="text-3xl md:text-4xl font-bold ">
-            让您的
-            <span className="bg-gradient-to-b from-primary/60 to-primary text-transparent bg-clip-text">
-              {" "}
-              创意与概念{" "}
-            </span>
-            汇聚于一处
-          </h2>
-          <p className="text-muted-foreground text-xl mt-2 mb-6 lg:mb-0">
-            云衍图表为您提供专业的可视化环境，无论是脑暴草图还是精密架构，都能在这里完美呈现。
-          </p>
-        </div>
+      <div className="container">
+        <div className="home-panel-soft grid items-center gap-8 px-6 py-10 lg:grid-cols-2 lg:gap-10 lg:px-10">
+          <SectionHeader
+            align="left"
+            className="text-center lg:text-left"
+            title={(
+              <>
+                让您的
+                <span className="home-accent-text">
+                  {" "}
+                  创意与概念{" "}
+                </span>
+                汇聚于一处
+              </>
+            )}
+            subtitle="云衍图表为您提供专业的可视化环境，无论是脑暴草图还是精密架构，都能在这里完美呈现。"
+            subtitleClassName="home-body-copy mb-1 lg:mb-0"
+          />
 
-        <div className="space-y-4 lg:col-start-2">
-          <Button className="w-full md:mr-4 md:w-auto font-bold">预约演示</Button>
-          <Button
-            variant="outline"
-            className="w-full md:w-auto font-bold"
-          >
-            查看所有功能
-          </Button>
+          <div className="flex flex-col gap-3 lg:justify-self-end">
+            <Button size="lg" className="w-full font-bold md:w-auto">
+              预约演示
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full font-bold md:w-auto"
+            >
+              查看所有功能
+            </Button>
+          </div>
         </div>
       </div>
     </section>

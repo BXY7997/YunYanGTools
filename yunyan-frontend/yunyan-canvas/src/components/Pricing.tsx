@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { SectionHeader } from "@/components/home/SectionHeader";
 
 enum PopularPlanType {
   NO = 0,
@@ -76,64 +77,75 @@ export const Pricing = () => {
   return (
     <section
       id="pricing"
-      className="container py-12 sm:py-16"
+      className="container home-section-spacing"
     >
-      <h2 className="text-3xl md:text-4xl font-bold text-center">
-        获取
-        <span className="bg-gradient-to-b from-primary/60 to-primary text-transparent bg-clip-text">
-          {" "}
-          无限{" "}
-        </span>
-        创作能力
-      </h2>
-      <h3 className="text-xl text-center text-muted-foreground pt-2 pb-6">
-        选择最适合您团队的计划，开启高效可视化之旅。
-      </h3>
+      <SectionHeader
+        title={(
+          <>
+            获取
+            <span className="home-accent-text">
+              {" "}
+              无限{" "}
+            </span>
+            创作能力
+          </>
+        )}
+        subtitle="选择最适合您团队的计划，开启高效可视化之旅。"
+        subtitleClassName="home-body-copy pb-8"
+      />
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {pricingList.map((pricing: PricingProps) => (
           <Card
             key={pricing.title}
-            className={
+            className={`home-card-surface home-card-surface-hover ${
               pricing.popular === PopularPlanType.YES
-                ? "drop-shadow-xl shadow-black/10 dark:shadow-white/10"
+                ? "border-primary/45 shadow-md ring-1 ring-primary/20"
                 : ""
-            }
+            }`}
           >
-            <CardHeader>
-              <CardTitle className="flex item-center justify-between">
+            <CardHeader className="pb-5">
+              <CardTitle className="flex items-center justify-between text-xl">
                 {pricing.title}
                 {pricing.popular === PopularPlanType.YES ? (
                   <Badge
                     variant="secondary"
-                    className="text-sm text-primary"
+                    className="text-xs text-primary"
                   >
                     最受欢迎
                   </Badge>
                 ) : null}
               </CardTitle>
               <div>
-                <span className="text-3xl font-bold">¥{pricing.price}</span>
-                <span className="text-muted-foreground"> /月</span>
+                <span className="text-4xl font-bold tracking-tight">¥{pricing.price}</span>
+                <span className="ml-1 text-muted-foreground">/月</span>
               </div>
 
-              <CardDescription>{pricing.description}</CardDescription>
+              <CardDescription className="text-sm leading-6">
+                {pricing.description}
+              </CardDescription>
             </CardHeader>
 
             <CardContent>
-              <Button className="w-full">{pricing.buttonText}</Button>
+              <Button
+                className="w-full font-semibold"
+                size="lg"
+                variant={pricing.popular === PopularPlanType.YES ? "default" : "outline"}
+              >
+                {pricing.buttonText}
+              </Button>
             </CardContent>
 
-            <hr className="w-4/5 m-auto mb-4" />
+            <div className="mx-6 mb-4 h-px bg-border/70" />
 
             <CardFooter className="flex">
               <div className="space-y-4">
                 {pricing.benefitList.map((benefit: string) => (
                   <span
                     key={benefit}
-                    className="flex"
+                    className="flex items-start gap-2 text-sm leading-6"
                   >
-                    <Check className="text-green-500" />{" "}
-                    <h3 className="ml-2">{benefit}</h3>
+                    <Check className="mt-1 h-4 w-4 text-primary" />
+                    <h3>{benefit}</h3>
                   </span>
                 ))}
               </div>

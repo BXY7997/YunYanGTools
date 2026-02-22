@@ -6,7 +6,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 const faqs = [
@@ -30,16 +29,17 @@ const faqs = [
 
 export const FAQ = () => {
   return (
-    <section className="py-20 lg:py-24">
-      <div className="container max-w-3xl">
+    <section className="py-16 lg:py-24">
+      <div className="container max-w-5xl">
         <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4 border-primary/20 text-primary bg-primary/5 px-3 py-1 rounded-full text-xs font-bold tracking-widest">
-            FAQ
-          </Badge>
-          <h2 className="text-3xl font-black tracking-tight md:text-5xl mb-6">
+          <div className="flex items-center justify-center gap-2 text-primary font-mono text-[10px] font-black tracking-[0.3em] uppercase mb-4">
+            <span className="opacity-40">07 /</span>
+            <span>Common Questions</span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6">
             常见问题解答
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-base md:text-lg font-medium">
             如果您的问题不在这里，欢迎加入我们的
             <Link href="/contact" className="text-primary hover:underline font-bold mx-1">
               开发者交流群

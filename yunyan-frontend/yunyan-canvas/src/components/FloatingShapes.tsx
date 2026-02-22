@@ -1,7 +1,16 @@
 import { motion } from "framer-motion";
+import type { ComponentType } from "react";
 import { Database, Server, Smartphone, Laptop, Cloud, Users, Globe, Lock } from "lucide-react";
 
-const OrbitingNode = ({ icon: Icon, angle, radius, color, duration = 20 }: any) => {
+interface OrbitingNodeProps {
+  icon: ComponentType<{ className?: string }>;
+  angle: number;
+  radius: number;
+  color: string;
+  duration?: number;
+}
+
+const OrbitingNode = ({ icon: Icon, angle, radius, color, duration = 20 }: OrbitingNodeProps) => {
   return (
     <motion.div
         className="absolute left-1/2 top-1/2 w-0 h-0 flex items-center justify-center pointer-events-none"
@@ -45,7 +54,7 @@ export const FloatingShapes = () => {
     <div className="relative w-full h-full min-h-[400px] flex items-center justify-center overflow-visible">
       {/* Central Hub */}
       <motion.div
-        className="z-20 bg-primary/10 text-primary p-6 rounded-2xl shadow-xl border-2 border-primary/20 backdrop-blur-md relative"
+        className="relative z-20 rounded-2xl border-2 border-primary/30 bg-primary/15 p-6 text-primary shadow-xl backdrop-blur-md"
         animate={{ 
             scale: [1, 1.1, 1],
             boxShadow: [
@@ -63,7 +72,7 @@ export const FloatingShapes = () => {
       {/* Orbit Rings - Adjusted for compact layout */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
         <motion.div 
-            className="w-[160px] h-[160px] rounded-full border border-dashed border-foreground/50"
+            className="h-[160px] w-[160px] rounded-full border border-dashed border-primary/35"
             animate={{ rotate: 360 }}
             transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
         />
@@ -71,7 +80,7 @@ export const FloatingShapes = () => {
       
        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
         <motion.div 
-            className="w-[280px] h-[280px] rounded-full border border-foreground/30"
+            className="h-[280px] w-[280px] rounded-full border border-primary/25"
             animate={{ rotate: -360 }}
             transition={{ duration: 100, repeat: Infinity, ease: "linear" }}
         />
@@ -79,14 +88,14 @@ export const FloatingShapes = () => {
 
       {/* Orbiting Icons - Inner Ring (Radius 80) */}
       <OrbitingNode icon={Server} angle={0} radius={80} color="text-blue-500" duration={25} />
-      <OrbitingNode icon={Smartphone} angle={120} radius={80} color="text-green-500" duration={25} />
-      <OrbitingNode icon={Laptop} angle={240} radius={80} color="text-purple-500" duration={25} />
+      <OrbitingNode icon={Smartphone} angle={120} radius={80} color="text-sky-500" duration={25} />
+      <OrbitingNode icon={Laptop} angle={240} radius={80} color="text-indigo-500" duration={25} />
 
       {/* Orbiting Icons - Outer Ring (Radius 140) */}
-      <OrbitingNode icon={Cloud} angle={45} radius={140} color="text-orange-500" duration={40} />
-      <OrbitingNode icon={Users} angle={135} radius={140} color="text-red-500" duration={40} />
-      <OrbitingNode icon={Globe} angle={225} radius={140} color="text-cyan-500" duration={40} />
-      <OrbitingNode icon={Lock} angle={315} radius={140} color="text-indigo-500" duration={40} />
+      <OrbitingNode icon={Cloud} angle={45} radius={140} color="text-cyan-500" duration={40} />
+      <OrbitingNode icon={Users} angle={135} radius={140} color="text-blue-600" duration={40} />
+      <OrbitingNode icon={Globe} angle={225} radius={140} color="text-sky-600" duration={40} />
+      <OrbitingNode icon={Lock} angle={315} radius={140} color="text-indigo-600" duration={40} />
       
     </div>
   );

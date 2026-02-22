@@ -1,169 +1,210 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { ChevronRight, Github, Boxes } from "lucide-react";
+import { ChevronRight, Github, Boxes, Menu, X } from "lucide-react";
+import { motion, AnimatePresence, LayoutGroup } from "motion/react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-  NavigationMenuLink,
-} from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
   { label: "首页", href: "/" },
   { label: "生成器", href: "/generators" },
-  { label: "模板", href: "/template" },
-  { label: "文档", href: "/docs" },
+  { label: "模板库", href: "/template" },
+  { label: "开发文档", href: "/docs" },
 ];
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [pillRect, setPillRect] = useState({ left: 0, width: 0, opacity: 0 });
   const pathname = usePathname();
+  const navItemsRef = useRef<Map<string, HTMLAnchorElement>>(new Map());
+
+  // 监听滚动
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleResize = () => {
+      const activeItem = navItemsRef.current.get(pathname);
+      if (activeItem) {
+        const { offsetLeft, offsetWidth } = activeItem;
+        setPillRect({ left: offsetLeft, width: offsetWidth, opacity: 1 });
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [pathname]);
+
+  // 精准计算当前活跃项的位置
+  useEffect(() => {
+    const activeItem = navItemsRef.current.get(pathname);
+    if (activeItem) {
+      const { offsetLeft, offsetWidth } = activeItem;
+      setPillRect({ left: offsetLeft, width: offsetWidth, opacity: 1 });
+    } else {
+      setPillRect(prev => ({ ...prev, opacity: 0 }));
+    }
+  }, [pathname]);
 
   return (
-    <section
-      className={cn(
-        "fixed left-1/2 z-50 w-[min(92%,1200px)] -translate-x-1/2 top-6",
-        "transition-all duration-300"
-      )}
-    >
-      <div className="relative rounded-full border border-border/40 bg-background/70 backdrop-blur-xl shadow-lg shadow-black/5 dark:shadow-primary/5 pl-6 pr-3 py-2 flex items-center justify-between">
-        {/* Logo Area */}
-        <Link href="/" className="flex shrink-0 items-center gap-3 group">
-          <div className="size-9 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20 group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
-            <Boxes className="size-5 stroke-[2.5]" />
+    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 md:p-6 pointer-events-none">
+      <LayoutGroup id="navbar-pill-stable">
+        <motion.nav
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                          className={cn(
+                            "relative w-full max-w-7xl rounded-full border pointer-events-auto transition-colors duration-500",
+                            "flex items-center justify-between px-4 py-2.5 md:px-6",
+                            scrolled 
+                              ? "bg-background/80 backdrop-blur-xl border-border/40 shadow-2xl shadow-black/5 dark:shadow-primary/5" 
+                              : "bg-background/40 backdrop-blur-md border-border/20 shadow-none"
+                          )}
+                        >
+                          {/* Logo Section */}
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="relative size-9 rounded-xl bg-primary flex items-center justify-center text-white overflow-hidden shrink-0">
+            <Boxes className="size-5 stroke-[2.5] relative z-10 transition-transform duration-500 group-hover:rotate-12" />
+            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-foreground selection:bg-primary/30">
-            云衍<span className="text-primary/60 ml-1 font-medium">Yunyan</span>
-          </span>
+          <div className="flex flex-col text-left leading-tight">
+            <span className="text-base md:text-lg font-black tracking-tighter text-foreground">
+              云衍<span className="text-primary ml-0.5">YUNYAN</span>
+            </span>
+            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest hidden md:block">
+              Next-Gen Workshop
+            </span>
+          </div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <NavigationMenu className="max-lg:hidden absolute left-1/2 -translate-x-1/2">
-          <NavigationMenuList className="gap-1">
-            {ITEMS.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <NavigationMenuItem key={link.label}>
-                  <Link href={link.href} legacyBehavior passHref>
-                    <NavigationMenuLink
-                      className={cn(
-                        "group inline-flex h-9 w-max items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground outline-none disabled:pointer-events-none disabled:opacity-50",
-                        isActive ? "bg-accent/50 text-foreground font-semibold" : "text-muted-foreground"
-                      )}
-                    >
-                      {link.label}
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              )
-            })}
-          </NavigationMenuList>
-        </NavigationMenu>
+        {/* Center: Desktop Nav Items - Stable Single Pill logic */}
+        <div className="hidden lg:flex items-center bg-muted/20 dark:bg-zinc-900/40 rounded-full border border-border/10 p-1 relative">
+          {/* THE STABLE PILL: Only one div moving locally */}
+          <motion.div
+            className="absolute bg-primary rounded-full shadow-lg shadow-primary/20 z-0"
+            initial={false}
+            animate={{
+              left: pillRect.left,
+              width: pillRect.width,
+              opacity: pillRect.opacity,
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 35,
+              opacity: { duration: 0.2 }
+            }}
+            style={{ top: 4, bottom: 4 }}
+          />
 
-        {/* Right Panel: Tools & Auth */}
-        <div className="flex items-center gap-2">
-          {/* Tools Group */}
-          <div className="hidden sm:flex items-center gap-1 pr-2 border-r border-border/50 mr-2">
+          {ITEMS.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                ref={(el) => {
+                  if (el) navItemsRef.current.set(item.href, el);
+                }}
+                className={cn(
+                  "relative px-5 py-1.5 text-sm font-bold transition-colors duration-300 rounded-full outline-none z-10",
+                  isActive 
+                    ? "text-primary-foreground" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Right Section: Actions */}
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="hidden sm:flex items-center gap-1 border-r border-border/50 pr-2 mr-1">
             <Button variant="ghost" size="icon" className="rounded-full size-9 text-muted-foreground hover:text-foreground" asChild>
               <Link href="https://github.com/yunyan-tech" target="_blank">
                 <Github className="size-[1.1rem]" />
               </Link>
             </Button>
-            <div className="flex items-center justify-center size-9">
-              <ThemeToggle />
-            </div>
+            <ThemeToggle />
           </div>
 
-          {/* Auth Group */}
           <div className="flex items-center gap-2">
-            <Link href="/login" className="max-lg:hidden">
-              <Button variant="ghost" size="sm" className="rounded-full px-5 text-muted-foreground hover:text-foreground font-medium">
+            <Link href="/login" className="max-md:hidden">
+              <Button variant="ghost" size="sm" className="rounded-full px-5 text-sm font-bold text-muted-foreground hover:text-foreground">
                 登录
               </Button>
             </Link>
             <Link href="/my-projects">
-              <Button size="sm" className="rounded-full px-5 font-bold shadow-md shadow-primary/20 bg-primary text-white hover:bg-primary/90 transition-all hover:scale-105 active:scale-95">
+              <Button size="sm" className="rounded-full px-6 font-black shadow-lg shadow-primary/20 bg-primary text-white hover:bg-primary/90 transition-all active:scale-95 text-xs md:text-sm">
                 控制台
               </Button>
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="ml-2 text-muted-foreground relative flex size-8 lg:hidden items-center justify-center"
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden rounded-full size-9 bg-muted/50"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            <span className="sr-only">Open main menu</span>
-            <div className="relative w-5 h-4">
-              <span
-                className={cn(
-                  "absolute block h-0.5 w-full rounded-full bg-current transition-all duration-300 ease-in-out",
-                  isMenuOpen ? "top-1.5 rotate-45" : "top-0"
-                )}
-              />
-              <span
-                className={cn(
-                  "absolute block h-0.5 w-full rounded-full bg-current transition-all duration-300 ease-in-out",
-                  isMenuOpen ? "opacity-0" : "top-1.5"
-                )}
-              />
-              <span
-                className={cn(
-                  "absolute block h-0.5 w-full rounded-full bg-current transition-all duration-300 ease-in-out",
-                  isMenuOpen ? "top-1.5 -rotate-45" : "top-3"
-                )}
-              />
-            </div>
-          </button>
+            {isMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </Button>
         </div>
-      </div>
+      </motion.nav>
+      </LayoutGroup>
 
       {/* Mobile Menu Dropdown */}
-      <div
-        className={cn(
-          "absolute inset-x-0 top-[calc(100%+0.5rem)] bg-background/90 backdrop-blur-xl border border-border/40 rounded-3xl p-4 shadow-2xl transition-all duration-300 ease-in-out origin-top lg:hidden",
-          isMenuOpen
-            ? "opacity-100 scale-100 translate-y-0 visible"
-            : "opacity-0 scale-95 -translate-y-4 invisible"
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            transition={{ type: "spring", damping: 25, stiffness: 250 }}
+            className="absolute top-[calc(100%-0.5rem)] left-4 right-4 bg-background/95 backdrop-blur-2xl border border-border/40 rounded-2xl p-4 shadow-2xl lg:hidden pointer-events-auto"
+          >
+            <div className="flex flex-col space-y-1">
+              {ITEMS.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className={cn(
+                    "flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-bold transition-all",
+                    pathname === link.href 
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {link.label}
+                  <ChevronRight className={cn("size-4 opacity-50", pathname === link.href && "opacity-100")} />
+                </Link>
+              ))}
+              <div className="h-px bg-border/50 my-3" />
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                 <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="outline" className="w-full rounded-xl font-bold h-11 border-2">登录</Button>
+                </Link>
+                <Link href="/my-projects" onClick={() => setIsMenuOpen(false)}>
+                  <Button className="w-full rounded-xl font-bold h-11 shadow-lg shadow-primary/20">控制台</Button>
+                </Link>
+              </div>
+            </div>
+          </motion.div>
         )}
-      >
-        <nav className="flex flex-col space-y-1">
-          {ITEMS.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className={cn(
-                "flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-colors",
-                pathname === link.href 
-                  ? "bg-primary/10 text-primary" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {link.label}
-              <ChevronRight className="size-4 opacity-50" />
-            </Link>
-          ))}
-          <div className="h-px bg-border/50 my-2" />
-          <div className="flex items-center gap-2 pt-2">
-             <Link href="/login" className="flex-1">
-              <Button variant="outline" className="w-full rounded-xl">登录</Button>
-            </Link>
-            <Link href="/my-projects" className="flex-1">
-              <Button className="w-full rounded-xl">控制台</Button>
-            </Link>
-          </div>
-        </nav>
-      </div>
-    </section>
+      </AnimatePresence>
+    </header>
   );
 };

@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ScrollAnimation } from "./ui/scroll-animation";
+import { SectionHeader } from "@/components/home/SectionHeader";
 
 interface TestimonialProps {
   image: string;
@@ -64,30 +65,32 @@ export const Testimonials = () => {
   return (
     <section
       id="testimonials"
-      className="container py-12 sm:py-16"
+      className="container home-section-spacing"
     >
       <ScrollAnimation direction="up">
-        <h2 className="text-3xl md:text-4xl font-bold text-center">
-          看看
-          <span className="bg-gradient-to-b from-primary/60 to-primary text-transparent bg-clip-text">
-            {" "}
-            大家为什么喜欢{" "}
-          </span>
-          云衍图表
-        </h2>
-
-        <p className="text-xl text-muted-foreground pt-2 pb-6 text-center max-w-2xl mx-auto">
-          数以千计的开发者、产品经理和架构师已经在云衍图表上开启了他们的高效设计。
-        </p>
+        <SectionHeader
+          title={(
+            <>
+              看看
+              <span className="home-accent-text">
+                {" "}
+                大家为什么喜欢{" "}
+              </span>
+              云衍图表
+            </>
+          )}
+          subtitle="数以千计的开发者、产品经理和架构师已经在云衍图表上开启了他们的高效设计。"
+          subtitleClassName="home-body-copy max-w-2xl pb-6"
+        />
       </ScrollAnimation>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mx-auto">
         {testimonials.map(
           ({ image, name, userName, comment }: TestimonialProps, i) => (
             <ScrollAnimation key={userName} direction="up" delay={i * 0.1} className="h-full">
-              <Card className="h-full flex flex-col hover:shadow-lg transition-shadow duration-300">
+              <Card className="home-card-surface home-card-surface-hover h-full flex flex-col">
                 <CardHeader className="flex flex-row items-center gap-4 pb-4">
-                  <Avatar>
+                  <Avatar className="ring-2 ring-primary/15">
                     <AvatarImage
                       alt={name}
                       src={image}
@@ -97,13 +100,15 @@ export const Testimonials = () => {
                   </Avatar>
 
                   <div className="flex flex-col">
-                    <CardTitle className="text-lg">{name}</CardTitle>
-                    <CardDescription>{userName}</CardDescription>
+                    <CardTitle className="text-lg leading-tight">{name}</CardTitle>
+                    <CardDescription className="text-xs tracking-wide">
+                      {userName}
+                    </CardDescription>
                   </div>
                 </CardHeader>
 
                 <CardContent className="flex-grow">
-                   <p className="text-muted-foreground leading-relaxed">"{comment}"</p>
+                  <p className="text-sm leading-6 text-muted-foreground">“{comment}”</p>
                 </CardContent>
               </Card>
             </ScrollAnimation>

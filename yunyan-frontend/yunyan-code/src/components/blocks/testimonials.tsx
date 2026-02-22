@@ -42,14 +42,14 @@ const items = [
 
 export const Testimonials = () => {
   return (
-    <section className="py-20 lg:py-24 overflow-hidden">
-      <div className="container">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+    <section className="py-16 lg:py-20 overflow-hidden">
+      <div className="container max-w-7xl">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="max-w-xl">
-            <h2 className="text-3xl font-black tracking-tight md:text-5xl mb-4">
+            <h2 className="text-2xl font-black tracking-tight md:text-4xl mb-3 leading-tight">
               深受开发者喜爱
             </h2>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-base font-medium">
               加入 5,000+ 使用云衍加速开发的同学和工程师行列。
             </p>
           </div>

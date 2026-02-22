@@ -2,13 +2,20 @@
 
 import Privacy from "./privacy.mdx";
 
+import { Background } from "@/components/background";
+import { Reveal } from "@/components/reveal";
+
 const Page = () => {
   return (
-    <section className="mx-auto max-w-2xl px-4 py-28 lg:pt-44 lg:pb-32">
-      <article className="prose prose-lg dark:prose-invert">
-        <Privacy />
-      </article>
-    </section>
+    <Background variant="dots">
+      <section className="mx-auto max-w-3xl px-6 py-28 lg:py-40">
+        <Reveal direction="up" delay={0.1}>
+          <article className="prose prose-lg dark:prose-invert prose-headings:font-black prose-headings:italic prose-headings:uppercase prose-headings:tracking-tighter">
+            <Privacy />
+          </article>
+        </Reveal>
+      </section>
+    </Background>
   );
 };
 

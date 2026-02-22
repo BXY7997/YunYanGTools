@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { MedalIcon, MapIcon, PlaneIcon, GiftIcon } from "../components/Icons";
+import { SectionHeader } from "@/components/home/SectionHeader";
 
 interface FeatureProps {
   icon: JSX.Element;
@@ -38,31 +39,36 @@ export const HowItWorks = () => {
   return (
     <section
       id="howItWorks"
-      className="container text-center py-12 sm:py-16"
+      className="container home-section-spacing text-center"
     >
-      <h2 className="text-3xl md:text-4xl font-bold ">
-        如何使用{" "}
-        <span className="bg-gradient-to-b from-primary/60 to-primary text-transparent bg-clip-text">
-          分步指南{" "}
-        </span>
-      </h2>
-      <p className="md:w-3/4 mx-auto mt-2 mb-6 text-xl text-muted-foreground">
-        只需几步，即可将您的想法转化为精美的专业图表。
-      </p>
+      <SectionHeader
+        title={(
+          <>
+            如何使用{" "}
+            <span className="home-accent-text">
+              分步指南{" "}
+            </span>
+          </>
+        )}
+        subtitle="只需几步，即可将您的想法转化为精美的专业图表。"
+        subtitleClassName="home-body-copy md:max-w-2xl mb-10"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {features.map(({ icon, title, description }: FeatureProps) => (
           <Card
             key={title}
-            className="bg-muted/50"
+            className="home-card-surface home-card-surface-hover"
           >
             <CardHeader>
-              <CardTitle className="grid gap-4 place-items-center">
+              <CardTitle className="grid place-items-center gap-4 text-xl">
                 {icon}
                 {title}
               </CardTitle>
             </CardHeader>
-            <CardContent>{description}</CardContent>
+            <CardContent className="text-sm leading-6 text-muted-foreground">
+              {description}
+            </CardContent>
           </Card>
         ))}
       </div>

@@ -1,38 +1,38 @@
 export const Statistics = () => {
-  interface statsProps {
+  interface StatsProps {
     quantity: string;
     description: string;
   }
 
-  const stats: statsProps[] = [
+  const stats: StatsProps[] = [
     {
-      quantity: "2.7K+",
-      description: "Users",
+      quantity: "50,000+",
+      description: "活跃团队",
     },
     {
-      quantity: "1.8K+",
-      description: "Subscribers",
+      quantity: "120+",
+      description: "合作伙伴",
     },
     {
-      quantity: "112",
-      description: "Downloads",
+      quantity: "99.95%",
+      description: "平台可用性",
     },
     {
-      quantity: "4",
-      description: "Products",
+      quantity: "35%",
+      description: "交付效率提升",
     },
   ];
 
   return (
     <section id="statistics">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-        {stats.map(({ quantity, description }: statsProps) => (
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {stats.map(({ quantity, description }: StatsProps) => (
           <div
             key={description}
-            className="space-y-2 text-center"
+            className="home-card-surface px-4 py-3 text-center"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold ">{quantity}</h2>
-            <p className="text-xl text-muted-foreground">{description}</p>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{quantity}</h2>
+            <p className="mt-1 text-sm font-medium text-muted-foreground">{description}</p>
           </div>
         ))}
       </div>

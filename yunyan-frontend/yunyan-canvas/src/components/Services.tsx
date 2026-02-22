@@ -2,6 +2,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { MagnifierIcon, WalletIcon, ChartIcon } from "./Icons";
 import { FloatingShapes } from "./FloatingShapes";
 import { ScrollAnimation } from "./ui/scroll-animation";
+import { SectionHeader } from "@/components/home/SectionHeader";
 
 interface ServiceProps {
   title: string;
@@ -32,31 +33,38 @@ const serviceList: ServiceProps[] = [
 
 export const Services = () => {
   return (
-    <section className="container py-12 sm:py-16">
+    <section className="container home-section-spacing">
       <div className="grid lg:grid-cols-2 gap-12 items-stretch">
         <ScrollAnimation direction="left" className="flex">
           <div className="flex flex-col justify-center py-4">
-            <h2 className="text-3xl md:text-4xl font-bold">
-              <span className="bg-gradient-to-b from-primary/60 to-primary text-transparent bg-clip-text">
-                为每位{" "}
-              </span>
-              专业人士打造
-            </h2>
-
-            <p className="text-muted-foreground text-lg mt-4 mb-8">
-              云衍图表适应您的工作流程，为不同领域提供专业化的可视化工具。
-            </p>
+            <SectionHeader
+              align="left"
+              className="mb-8"
+              title={(
+                <>
+                  <span className="home-accent-text">
+                    为每位{" "}
+                  </span>
+                  专业人士打造
+                </>
+              )}
+              subtitle="云衍图表适应您的工作流程，为不同领域提供专业化的可视化工具。"
+              subtitleClassName="max-w-xl home-body-copy"
+            />
 
             <div className="flex flex-col gap-4">
               {serviceList.map(({ icon, title, description }: ServiceProps) => (
-                <Card key={title} className="bg-muted/20 border-none shadow-none hover:bg-muted/40 transition-colors">
-                  <CardHeader className="space-y-1 flex md:flex-row justify-start items-center gap-4 py-4 px-6">
-                    <div className="bg-primary/10 p-2 rounded-xl text-primary">
+                <Card
+                  key={title}
+                  className="home-card-surface home-card-surface-hover"
+                >
+                  <CardHeader className="flex items-center gap-4 space-y-0 px-6 py-5 md:flex-row md:justify-start">
+                    <div className="rounded-xl bg-primary/10 p-2.5 text-primary">
                       {icon}
                     </div>
                     <div>
                       <CardTitle className="text-lg">{title}</CardTitle>
-                      <CardDescription className="text-sm">
+                      <CardDescription className="mt-1 text-sm leading-6">
                         {description}
                       </CardDescription>
                     </div>
@@ -67,7 +75,10 @@ export const Services = () => {
           </div>
         </ScrollAnimation>
 
-        <ScrollAnimation direction="right" className="w-full flex items-center justify-center bg-muted/10 rounded-3xl border border-muted-foreground/5 overflow-hidden">
+        <ScrollAnimation
+          direction="right"
+          className="home-panel-soft w-full overflow-hidden rounded-3xl flex items-center justify-center"
+        >
             <FloatingShapes />
         </ScrollAnimation>
       </div>

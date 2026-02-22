@@ -6,6 +6,11 @@ interface SponsorProps {
   name: string;
 }
 
+interface TrustSignalProps {
+  label: string;
+  value: string;
+}
+
 const sponsors: SponsorProps[] = [
   {
     icon: <Radar className="w-8 h-8" />,
@@ -41,23 +46,46 @@ const sponsors: SponsorProps[] = [
   },
 ];
 
+const trustSignals: TrustSignalProps[] = [
+  { value: "500+", label: "企业客户" },
+  { value: "12", label: "覆盖行业" },
+  { value: "99.95%", label: "可用性 SLA" },
+];
+
 export const Sponsors = () => {
   return (
     <section
       id="sponsors"
-      className="container py-8 sm:py-10"
+      className="container home-section-spacing-compact"
     >
-      <h2 className="text-center text-xs font-bold mb-4 text-muted-foreground/60 uppercase tracking-widest">
+      <h2 className="home-kicker mb-5 text-center">
         Trusted by industry leaders
       </h2>
 
-      <div className="h-[5rem] rounded-md flex flex-col antialiased items-center justify-center relative overflow-hidden">
+      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {trustSignals.map((signal) => (
+          <div
+            key={signal.label}
+            className="home-card-surface px-4 py-3 text-center"
+          >
+            <div className="text-xl font-extrabold tracking-tight text-foreground">{signal.value}</div>
+            <div className="text-[11px] font-semibold tracking-wide text-muted-foreground">{signal.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="home-card-surface mb-4 flex h-[5.5rem] flex-col items-center justify-center overflow-hidden rounded-2xl antialiased">
         <InfiniteMovingCards
           items={sponsors}
           direction="right"
           speed="slow"
         />
       </div>
+
+      <p className="mx-auto max-w-2xl text-center text-sm leading-6 text-muted-foreground">
+        “我们在 2 周内完成了跨部门架构共识，评审效率提升明显。”{" "}
+        <span className="font-semibold text-foreground/80">— 某制造企业数字化负责人</span>
+      </p>
     </section>
   );
 };

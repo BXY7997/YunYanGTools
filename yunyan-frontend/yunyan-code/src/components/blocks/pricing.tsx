@@ -64,16 +64,17 @@ export const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
 
   return (
-    <section id="pricing" className="py-20 lg:py-24 relative overflow-hidden">
-      <div className="container relative z-10">
+    <section id="pricing" className="py-16 lg:py-24 relative overflow-hidden">
+      <div className="container relative z-10 max-w-6xl">
         <div className="text-center max-w-2xl mx-auto mb-16">
-          <Badge variant="outline" className="mb-4 border-primary/20 text-primary bg-primary/5 px-3 py-1 rounded-full text-xs font-bold tracking-widest">
-            SIMPLE PRICING
-          </Badge>
-          <h2 className="text-3xl font-black tracking-tight md:text-5xl mb-6 text-foreground">
-            为价值付费，<span className="text-primary">不为溢价买单</span>
+          <div className="flex items-center justify-center gap-2 text-primary font-mono text-[10px] font-black tracking-[0.3em] uppercase mb-4">
+            <span className="opacity-40">06 /</span>
+            <span>Simple Pricing</span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-6 text-foreground leading-tight">
+            为价值付费，<br /><span className="text-primary">不为溢价买单</span>
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-base md:text-lg font-medium">
             无论是学生毕设还是企业开发，我们都提供了极具性价比的方案。
             <br className="hidden md:block" />
             认证学生身份可享 <span className="text-foreground font-bold underline decoration-primary decoration-2 underline-offset-4">5 折优惠</span>。
