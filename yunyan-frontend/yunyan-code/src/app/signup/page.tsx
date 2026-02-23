@@ -1,76 +1,127 @@
-import Image from "next/image";
 import Link from "next/link";
 
+import { UserPlus } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
-import { Background } from "@/components/background";
-import { Reveal } from "@/components/reveal";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const Signup = () => {
+const onboardingBenefits = [
+  "免费体验完整代码生成与模板下载能力",
+  "自动保存历史任务，随时回溯配置方案",
+  "一键加入团队协作与项目共享空间",
+];
+
+export default function SignupPage() {
   return (
-    <Background variant="dots">
-      <section className="py-28 lg:pt-44 lg:pb-32 min-h-screen flex items-center justify-center">
-        <div className="container">
-          <Reveal direction="up" delay={0.1}>
-            <div className="flex flex-col gap-4">
-              <Card className="mx-auto w-full max-w-sm border-none shadow-2xl rounded-[2rem] bg-background/40 backdrop-blur-xl border-t border-white/20 p-4">
-                <CardHeader className="flex flex-col items-center space-y-0 p-8 pb-4">
-                  <Image
-                    src="/logo.svg"
-                    alt="logo"
-                    width={120}
-                    height={24}
-                    className="mb-8 dark:invert"
-                  />
-                  <p className="mb-2 text-2xl font-black italic uppercase tracking-tighter text-center">Start your free trial</p>
-                  <p className="text-muted-foreground text-sm font-medium tracking-tight">
-                    Sign up in less than 2 minutes.
-                  </p>
-                </CardHeader>
-                <CardContent className="p-8 pt-4">
-                  <div className="grid gap-5">
-                    <Input type="text" placeholder="Enter your name" required className="h-12 rounded-xl bg-background/50" />
-                    <Input type="email" placeholder="Enter your email" required className="h-12 rounded-xl bg-background/50" />
-                    <div>
-                      <Input
-                        type="password"
-                        placeholder="Enter your password"
-                        required
-                        className="h-12 rounded-xl bg-background/50"
-                      />
-                      <p className="text-muted-foreground mt-2 text-[10px] font-bold uppercase tracking-widest opacity-60">
-                        Must be at least 8 characters.
-                      </p>
-                    </div>
-                    <Button type="submit" className="mt-2 w-full h-12 rounded-xl font-black shadow-lg shadow-primary/20">
-                      Create an account
-                    </Button>
-                    <div className="relative my-2">
-                      <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-muted/50" /></div>
-                      <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest"><span className="bg-transparent px-2 text-muted-foreground/40">Or continue with</span></div>
-                    </div>
-                    <Button variant="outline" className="w-full h-12 rounded-xl border-2 font-bold hover:bg-background">
-                      <FcGoogle className="mr-2 size-5" />
-                      Sign up with Google
-                    </Button>
-                  </div>
-                  <div className="text-muted-foreground mx-auto mt-8 flex justify-center gap-1 text-sm font-medium">
-                    <p>Already have an account?</p>
-                    <Link href="/login" className="text-primary font-black italic hover:underline">
-                      Log in
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </Reveal>
+    <AuthShell
+      pageBadge="Free Trial"
+      pageTitle="创建云衍账号"
+      pageDescription="立即开启源码生成、模板复用与项目协作的一体化工作流。"
+      heroIcon={UserPlus}
+      heroTitle="注册后立即可用"
+      heroDescription="无需复杂配置，完成注册即可进入控制台开始创建项目。"
+      heroPoints={onboardingBenefits}
+      heroLinkHref="/login"
+      heroLinkText="已有账号？直接登录"
+      formTag="Create Account"
+      formTitle="开始免费使用"
+      formDescription="填写以下信息，2 分钟内完成注册。"
+    >
+      <form className="space-y-5">
+        <div className="space-y-2">
+          <Label
+            htmlFor="signup-name"
+            className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground"
+          >
+            昵称
+          </Label>
+          <Input
+            id="signup-name"
+            type="text"
+            placeholder="请输入昵称"
+            required
+            className="h-12 rounded-xl bg-background/50 border-border/40 px-4 text-sm font-bold"
+          />
         </div>
-      </section>
-    </Background>
-  );
-};
 
-export default Signup;
+        <div className="space-y-2">
+          <Label
+            htmlFor="signup-email"
+            className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground"
+          >
+            邮箱地址
+          </Label>
+          <Input
+            id="signup-email"
+            type="email"
+            placeholder="you@company.com"
+            required
+            className="h-12 rounded-xl bg-background/50 border-border/40 px-4 text-sm font-bold"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label
+            htmlFor="signup-password"
+            className="text-[11px] font-black uppercase tracking-[0.16em] text-muted-foreground"
+          >
+            设置密码
+          </Label>
+          <Input
+            id="signup-password"
+            type="password"
+            placeholder="至少 8 位字符"
+            required
+            className="h-12 rounded-xl bg-background/50 border-border/40 px-4 text-sm font-bold"
+          />
+        </div>
+
+        <div className="flex items-start gap-2.5 rounded-xl border border-border/40 bg-background/30 px-4 py-3">
+          <Checkbox id="agree-terms" className="mt-0.5 rounded-md border-border/80" />
+          <Label
+            htmlFor="agree-terms"
+            className="text-xs font-bold text-muted-foreground leading-relaxed cursor-pointer"
+          >
+            我已阅读并同意
+            <Link href="/privacy" className="text-primary hover:underline ml-1 mr-1">
+              隐私政策
+            </Link>
+            与平台服务条款。
+          </Label>
+        </div>
+
+        <Button
+          type="submit"
+          className="w-full h-12 rounded-xl font-black shadow-lg shadow-primary/20"
+        >
+          创建账号并进入控制台
+        </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border/40" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-background/80 px-3 text-[10px] font-black uppercase tracking-[0.25em] text-muted-foreground/60">
+              或使用以下方式注册
+            </span>
+          </div>
+        </div>
+
+        <Button
+          variant="outline"
+          type="button"
+          className="w-full h-12 rounded-xl border-2 font-bold hover:bg-background"
+        >
+          <FcGoogle className="size-5" />
+          使用 Google 快速注册
+        </Button>
+      </form>
+    </AuthShell>
+  );
+}
+

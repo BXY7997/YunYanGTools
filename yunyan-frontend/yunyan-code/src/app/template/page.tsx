@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 import { Background } from "@/components/background";
 import { Reveal } from "@/components/reveal";
+import { PageIntro } from "@/components/system/page-intro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,28 +43,17 @@ export default function TemplatePage() {
 
   return (
     <Background variant="dots">
-      <section className="container py-24 lg:py-28 max-w-7xl">
+      <section className="app-page-shell">
         
         {/* Dashboard-Style Header */}
         <Reveal direction="up" delay={0.1}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6 border-b border-primary/5 pb-8">
-            <div className="flex items-start gap-4">
-              <div className="bg-primary/10 p-2.5 rounded-xl shrink-0">
-                <LayoutGrid className="size-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black tracking-tight text-foreground md:text-4xl">
-                  精选模板库
-                </h1>
-                <p className="text-muted-foreground mt-2 text-base font-medium max-w-2xl">
-                  探索高质量项目骨架，开箱即用，加速您的工程交付。
-                </p>
-              </div>
-            </div>
-            <Badge variant="secondary" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-muted/50 border-none">
-              Marketplace v1.2
-            </Badge>
-          </div>
+          <PageIntro
+            icon={LayoutGrid}
+            title="精选模板库"
+            description="探索高质量项目骨架，开箱即用，加速您的工程交付。"
+            badge="Marketplace v1.2"
+            className="mb-10"
+          />
         </Reveal>
 
         {/* Toolbar & Filter */}
@@ -118,7 +108,7 @@ export default function TemplatePage() {
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Card className="group relative overflow-hidden bg-background/40 backdrop-blur-xl border border-border/40 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5 rounded-2xl h-full flex flex-col">
+                    <Card className="group relative overflow-hidden app-surface rounded-2xl h-full flex flex-col hover:border-primary/35 hover:shadow-2xl hover:shadow-primary/10 app-interactive">
                       <div className="relative aspect-[16/10] overflow-hidden bg-muted shrink-0">
                         <Image src={tpl.preview} alt={tpl.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width: 768px) 100vw, 33vw" />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">

@@ -10,6 +10,7 @@ import {
 
 import { Background } from "@/components/background";
 import { Reveal } from "@/components/reveal";
+import { PageIntro } from "@/components/system/page-intro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,30 +62,17 @@ const generators = [
 export default function GeneratorsPage() {
   return (
     <Background variant="dots">
-      <section className="container py-24 lg:py-28 max-w-7xl">
+      <section className="app-page-shell">
         
         {/* Dashboard-Style Header */}
         <Reveal direction="up" delay={0.1}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6 border-b border-primary/5 pb-8">
-            <div className="flex items-start gap-4">
-              <div className="bg-primary/10 p-2.5 rounded-xl shrink-0">
-                <Command className="size-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black tracking-tight text-foreground md:text-4xl">
-                  核心生成引擎
-                </h1>
-                <p className="text-muted-foreground mt-2 text-base font-medium max-w-2xl">
-                  选择适合您业务场景的生成器，交付工业级源码工程底座。
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-muted/50 border-none">
-                Industrial v2.0
-              </Badge>
-            </div>
-          </div>
+          <PageIntro
+            icon={Command}
+            title="核心生成引擎"
+            description="选择适合您业务场景的生成器，交付工业级源码工程底座。"
+            badge="Industrial v2.0"
+            className="mb-10"
+          />
         </Reveal>
 
         {/* Generators Grid */}
@@ -93,7 +81,7 @@ export default function GeneratorsPage() {
             const Icon = gen.icon;
             return (
               <Reveal key={gen.id} direction={i % 2 === 0 ? "left" : "right"} delay={0.1 * i} distance={30}>
-                <Card className="group relative overflow-hidden bg-background/40 backdrop-blur-xl border border-border/40 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5 rounded-2xl">
+                <Card className="group relative overflow-hidden app-surface rounded-2xl hover:border-primary/35 hover:shadow-2xl hover:shadow-primary/10 app-interactive">
                   <CardContent className="p-8 relative z-10 flex flex-col h-full">
                     <div className="flex justify-between items-start mb-6">
                       <div className={cn("size-12 rounded-xl flex items-center justify-center shadow-sm border border-white/10 transform group-hover:scale-110 transition-transform duration-500", gen.bg, gen.color)}>

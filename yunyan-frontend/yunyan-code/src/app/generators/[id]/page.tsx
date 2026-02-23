@@ -9,7 +9,7 @@ import { motion } from "motion/react";
 
 import { Background } from "@/components/background";
 import { Reveal } from "@/components/reveal";
-import { Badge } from "@/components/ui/badge";
+import { PageIntro } from "@/components/system/page-intro";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -25,10 +25,18 @@ const generatorNames: Record<string, string> = {
   gui: "桌面 GUI 应用",
 };
 
+const generatorDescriptions: Record<string, string> = {
+  admin: "快速生成含 RBAC、菜单路由与审计模块的后台管理工程。",
+  web: "构建性能优先的全栈 Web 项目骨架，支持现代部署链路。",
+  java: "生成标准化 Java 企业项目，内置分层架构与基础中间件集成。",
+  gui: "输出跨平台桌面应用基础工程，覆盖常见本地化能力。",
+};
+
 export default function GeneratorDetailPage() {
   const params = useParams();
   const id = params?.id as string;
   const name = generatorNames[id] || "生成器详情";
+  const description = generatorDescriptions[id] || "在统一工作台中配置参数并生成可交付源码。";
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [done, setDone] = useState(false);
@@ -53,23 +61,24 @@ export default function GeneratorDetailPage() {
 
   return (
     <Background variant="dots">
-      <section className="container py-20 lg:py-28 max-w-7xl">
+      <section className="app-page-shell">
         <Reveal direction="up" delay={0.1}>
-          <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <Badge className="bg-primary/10 text-primary border-none rounded-full font-black text-[10px] tracking-widest px-2.5 py-0.5 uppercase">Generator Workshop</Badge>
-                <span className="text-muted-foreground text-xs font-bold font-mono">/ {id}</span>
-              </div>
-              <h1 className="text-3xl font-black tracking-tighter md:text-5xl italic uppercase leading-none">
-                {name.split(' ')[0]}
-                <span className="text-primary not-italic">{name.split(' ').slice(1).join(' ')}</span>
-              </h1>
-            </div>
-            <Button variant="outline" size="sm" className="rounded-xl border-2 font-black hover:bg-background transition-all h-10 px-6">
-              预览示例工程
-            </Button>
-          </div>
+          <PageIntro
+            icon={Settings2}
+            title={name}
+            description={description}
+            badge={`Generator / ${id}`}
+            actions={(
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-10 rounded-xl border-2 px-6 font-black hover:bg-background"
+              >
+                预览示例工程
+              </Button>
+            )}
+            className="mb-10"
+          />
         </Reveal>
 
         <div className="grid gap-10 lg:grid-cols-12 items-start text-foreground">
@@ -77,7 +86,7 @@ export default function GeneratorDetailPage() {
           <div className="lg:col-span-7 space-y-8">
             <Reveal direction="left" delay={0.2}>
               <div className="space-y-8">
-                <Card className="border-none bg-background/40 backdrop-blur-xl shadow-sm border-t border-white/20 rounded-3xl overflow-hidden">
+                <Card className="app-surface rounded-3xl border-t border-white/20 overflow-hidden">
                   <CardHeader className="p-8 pb-0">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="size-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -118,7 +127,7 @@ export default function GeneratorDetailPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="border-none bg-background/40 backdrop-blur-xl shadow-sm border-t border-white/20 rounded-3xl overflow-hidden">
+                <Card className="app-surface rounded-3xl border-t border-white/20 overflow-hidden">
                   <CardHeader className="p-8 pb-0">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="size-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">

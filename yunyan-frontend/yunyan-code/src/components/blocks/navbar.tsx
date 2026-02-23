@@ -57,21 +57,21 @@ export const Navbar = () => {
   }, [pathname]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 md:p-6 pointer-events-none">
+    <header className="app-navbar fixed top-0 left-0 right-0 z-[100] flex justify-center p-4 md:p-6 pointer-events-none">
       <LayoutGroup id="navbar-pill-stable">
         <motion.nav
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                          className={cn(
-                            "relative w-full max-w-7xl rounded-full border pointer-events-auto transition-colors duration-500",
-                            "flex items-center justify-between px-4 py-2.5 md:px-6",
-                            scrolled 
-                              ? "bg-background/80 backdrop-blur-xl border-border/40 shadow-2xl shadow-black/5 dark:shadow-primary/5" 
-                              : "bg-background/40 backdrop-blur-md border-border/20 shadow-none"
-                          )}
-                        >
-                          {/* Logo Section */}
+          className={cn(
+            "relative w-full max-w-7xl rounded-full pointer-events-auto app-interactive",
+            "flex items-center justify-between px-4 py-2.5 md:px-6",
+            scrolled
+              ? "app-surface-strong border-border/70"
+              : "app-surface border-border/50 bg-background/55 shadow-none",
+          )}
+        >
+          {/* Logo Section */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="relative size-9 rounded-xl bg-primary flex items-center justify-center text-white overflow-hidden shrink-0">
             <Boxes className="size-5 stroke-[2.5] relative z-10 transition-transform duration-500 group-hover:rotate-12" />
@@ -158,6 +158,8 @@ export const Navbar = () => {
             size="icon"
             className="lg:hidden rounded-full size-9 bg-muted/50"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-expanded={isMenuOpen}
+            aria-label={isMenuOpen ? "关闭菜单" : "打开菜单"}
           >
             {isMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </Button>
@@ -173,7 +175,7 @@ export const Navbar = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={{ type: "spring", damping: 25, stiffness: 250 }}
-            className="absolute top-[calc(100%-0.5rem)] left-4 right-4 bg-background/95 backdrop-blur-2xl border border-border/40 rounded-2xl p-4 shadow-2xl lg:hidden pointer-events-auto"
+            className="absolute top-[calc(100%-0.5rem)] left-4 right-4 app-surface-strong rounded-2xl p-4 lg:hidden pointer-events-auto"
           >
             <div className="flex flex-col space-y-1">
               {ITEMS.map((link) => (

@@ -4,40 +4,30 @@ import { Terminal, Code, Rocket, ShieldCheck, HelpCircle, FileJson, Database, ty
 
 import { Background } from "@/components/background";
 import { Reveal } from "@/components/reveal";
+import { PageIntro } from "@/components/system/page-intro";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DocsPage() {
   return (
     <Background variant="dots">
-      <section className="container py-24 lg:py-28 max-w-7xl">
+      <section className="app-page-shell">
         
         {/* Dashboard-Style Header */}
         <Reveal direction="up" delay={0.1}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6 border-b border-primary/5 pb-8">
-            <div className="flex items-start gap-4">
-              <div className="bg-primary/10 p-2.5 rounded-xl shrink-0">
-                <BookOpen className="size-6 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-black tracking-tight text-foreground md:text-4xl">
-                  开发文档
-                </h1>
-                <p className="text-muted-foreground mt-2 text-base font-medium max-w-2xl">
-                  从环境搭建到源码运行，我们为您准备了详尽的保姆级教程。
-                </p>
-              </div>
-            </div>
-            <Badge variant="secondary" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-muted/50 border-none">
-              v2.4.0 Stable
-            </Badge>
-          </div>
+          <PageIntro
+            icon={BookOpen}
+            title="开发文档"
+            description="从环境搭建到源码运行，我们为您准备了详尽的保姆级教程。"
+            badge="v2.4.0 Stable"
+            className="mb-10"
+          />
         </Reveal>
 
         <Reveal direction="up" delay={0.2}>
           <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4">
             {/* Quick Start Card */}
-            <Card className="md:col-span-2 lg:col-span-2 bg-primary text-white border-none shadow-xl group cursor-pointer overflow-hidden relative rounded-2xl">
+            <Card className="md:col-span-2 lg:col-span-2 border-none bg-primary text-white shadow-2xl shadow-primary/20 group cursor-pointer overflow-hidden relative rounded-2xl app-interactive">
               <div className="absolute right-0 bottom-0 p-4 opacity-10 transform translate-x-4 translate-y-4 group-hover:scale-110 transition-transform duration-700">
                 <Rocket className="size-48" />
               </div>
@@ -70,7 +60,7 @@ export default function DocsPage() {
 
 function DocCard({ icon: Icon, title, desc, tag }: { icon: LucideIcon, title: string, desc: string, tag: string }) {
   return (
-    <Card className="border-none bg-background/40 backdrop-blur-xl hover:bg-background/80 transition-all duration-500 group cursor-pointer rounded-2xl border-t border-white/10 shadow-sm hover:shadow-md flex flex-col">
+    <Card className="app-surface rounded-2xl group cursor-pointer flex flex-col hover:border-primary/35 hover:shadow-2xl hover:shadow-primary/10 app-interactive">
       <CardHeader className="p-6 pb-4">
         <div className="bg-primary/5 text-primary size-10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-all group-hover:scale-110">
           <Icon className="size-5" />

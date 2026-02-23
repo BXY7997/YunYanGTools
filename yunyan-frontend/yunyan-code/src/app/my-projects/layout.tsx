@@ -10,7 +10,7 @@ export default function DashboardLayout({
 }) {
   return (
     <Background className="via-muted to-muted/80">
-      <section className="container py-24 lg:py-28">
+      <section className="app-page-shell">
         <Reveal direction="up" delay={0.1}>
           <DashboardHeader />
         </Reveal>

@@ -1,4 +1,3 @@
-import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 
 import type { Metadata } from "next";
@@ -55,13 +54,6 @@ const dmSans = localFont({
   ],
   variable: "--font-dm-sans",
   display: "swap",
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -127,7 +119,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
         <script
           async
@@ -135,16 +127,24 @@ export default function RootLayout({
           src="https://tweakcn.com/live-preview.min.js"
         />
       </head>
-      <body className={`${dmSans.variable} ${inter.variable} antialiased`}>
+      <body className={`${dmSans.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:font-bold"
+          >
+            跳转到主要内容
+          </a>
           <StyleGlideProvider />
           <Navbar />
-          <main className="">{children}</main>
+          <main id="main-content" className="min-h-screen">
+            {children}
+          </main>
           <Footer />
           <Toaster />
         </ThemeProvider>
