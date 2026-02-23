@@ -4,9 +4,10 @@ import React from "react";
 
 import Link from "next/link";
 
-import { ShieldCheck, Zap, Laptop, Database, Github, ArrowRight } from "lucide-react";
+import { ShieldCheck, Zap, Laptop, Database, Github, ArrowRight, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 
+import { PageIntro } from "@/components/system/page-intro";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -49,19 +50,13 @@ export const Features = () => {
   return (
     <section id="features" className="pb-20 lg:pb-24 overflow-hidden">
       <div className="container max-w-7xl">
-        {/* Header */}
-        <div className="max-w-2xl mb-16">
-          <div className="flex items-center gap-2 text-primary font-mono text-[10px] font-black tracking-[0.3em] uppercase mb-4">
-            <span className="opacity-40">00 /</span>
-            <span>Core Capabilities</span>
-          </div>
-          <h2 className="text-3xl font-black tracking-tight md:text-5xl mb-6 leading-tight">
-            不仅是工具，<br />更是您的开发助手
-          </h2>
-          <p className="text-muted-foreground text-base md:text-lg leading-relaxed font-medium">
-            云衍将枯燥的重复开发转化为简单的配置勾选。我们专注于生成高质量、可运行、易扩展的代码，让您将时间花在更有价值的事情上。
-          </p>
-        </div>
+        <PageIntro
+          icon={Sparkles}
+          title="不仅是工具，更是您的开发助手"
+          description="云衍将重复开发流程抽象成可配置工作流，持续输出高质量、可运行、可扩展的工程代码。"
+          badge="Core Capabilities"
+          className="mb-16"
+        />
 
         {/* Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
@@ -76,7 +71,7 @@ export const Features = () => {
                 transition={{ delay: item.delay, duration: 0.5 }}
                 className={`${item.size} group`}
               >
-                <Card className="h-full border border-white/10 bg-background/40 backdrop-blur-xl hover:bg-background/80 transition-all duration-500 shadow-sm hover:shadow-2xl hover:shadow-primary/5 overflow-hidden relative group/card">
+                <Card className="app-surface app-interactive h-full hover:bg-background/80 hover:border-primary/20 hover:shadow-2xl hover:shadow-primary/5 overflow-hidden relative group/card">
                   <CardContent className="p-8 h-full flex flex-col justify-between">
                     <div>
                       <div className={`${item.color} size-12 rounded-2xl flex items-center justify-center text-white mb-6 shadow-lg transform group-hover/card:scale-110 group-hover/card:rotate-3 transition-all duration-500`}>
@@ -101,7 +96,7 @@ export const Features = () => {
         </div>
 
         {/* GitHub & CTA */}
-        <Card className="bg-zinc-950 border-none rounded-3xl overflow-hidden relative group">
+        <Card className="app-surface-strong bg-zinc-950/95 border-white/10 rounded-3xl overflow-hidden relative group">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.15),transparent_50%)]" />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
           
@@ -134,8 +129,7 @@ export const Features = () => {
             </div>
           </CardContent>
           
-          {/* Grain Overlay */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay" />
+          <div className="absolute inset-0 pointer-events-none opacity-10 [background-image:repeating-linear-gradient(45deg,transparent_0,transparent_2px,rgba(255,255,255,0.12)_2px,rgba(255,255,255,0.12)_3px)] mix-blend-overlay" />
         </Card>
       </div>
     </section>

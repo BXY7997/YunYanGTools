@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { CircleHelp } from "lucide-react";
+
+import { PageIntro } from "@/components/system/page-intro";
 import {
   Accordion,
   AccordionContent,
@@ -31,26 +34,26 @@ export const FAQ = () => {
   return (
     <section className="py-16 lg:py-24">
       <div className="container max-w-5xl">
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center gap-2 text-primary font-mono text-[10px] font-black tracking-[0.3em] uppercase mb-4">
-            <span className="opacity-40">07 /</span>
-            <span>Common Questions</span>
-          </div>
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6">
-            常见问题解答
-          </h2>
-          <p className="text-muted-foreground text-base md:text-lg font-medium">
-            如果您的问题不在这里，欢迎加入我们的
-            <Link href="/contact" className="text-primary hover:underline font-bold mx-1">
-              开发者交流群
-            </Link>
-            提问。
-          </p>
-        </div>
+        <PageIntro
+          icon={CircleHelp}
+          title="常见问题解答"
+          description="整理了高频问题与最佳实践，帮助您更快完成工程落地。"
+          badge="Common Questions"
+          className="mb-12"
+          actions={(
+            <Button asChild variant="outline" className="h-10 rounded-xl border-2 px-5 font-bold">
+              <Link href="/contact">加入开发者交流群</Link>
+            </Button>
+          )}
+        />
 
         <Accordion type="single" collapsible className="w-full space-y-4">
           {faqs.map((faq, i) => (
-            <AccordionItem key={i} value={`item-${i}`} className="border border-primary/5 rounded-2xl bg-background/40 backdrop-blur-sm px-6 overflow-hidden data-[state=open]:bg-background/60 data-[state=open]:shadow-md transition-all">
+            <AccordionItem
+              key={i}
+              value={`item-${i}`}
+              className="app-surface app-interactive rounded-2xl px-6 overflow-hidden hover:border-primary/20 data-[state=open]:border-primary/25 data-[state=open]:bg-background/80 data-[state=open]:shadow-lg"
+            >
               <AccordionTrigger className="hover:no-underline py-6">
                 <span className="text-left font-bold text-foreground text-base pr-4">
                   {faq.question}

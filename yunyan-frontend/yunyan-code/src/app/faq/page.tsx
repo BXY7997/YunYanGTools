@@ -8,12 +8,12 @@ import { Reveal } from "@/components/reveal";
 
 const Page = () => {
   return (
-    <Background>
-      <div className="pt-20">
+    <Background variant="dots">
+      <section className="pt-24 lg:pt-28">
         <Reveal direction="up" delay={0.1}>
           <FAQ />
         </Reveal>
-      </div>
+      </section>
       <DashedLine className="mx-auto max-w-xl opacity-20" />
       <Reveal direction="up" delay={0.2}>
         <Testimonials />
