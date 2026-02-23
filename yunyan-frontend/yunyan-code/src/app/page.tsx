@@ -34,11 +34,11 @@ export default function Home() {
       </section>
 
       {/* Conversion: Bottom-up for stability */}
-      <Background variant="bottom" className="relative z-10">
+      <Background variant="bottom" className="relative z-10 py-20 lg:py-32">
         <Reveal direction="up" delay={0.1}>
           <Pricing />
         </Reveal>
-        <div className="mt-4 lg:mt-8">
+        <div className="mt-20 lg:mt-32">
           <Reveal direction="up" delay={0.2}>
             <FAQ />
           </Reveal>

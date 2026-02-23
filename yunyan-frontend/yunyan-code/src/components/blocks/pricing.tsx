@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 
-import { Check, GraduationCap, WalletCards } from "lucide-react";
+import { Check, GraduationCap } from "lucide-react";
 
-import { PageIntro } from "@/components/system/page-intro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -61,64 +60,48 @@ const plans = [
   },
 ];
 
-interface PricingProps {
-  className?: string;
-}
-
-export const Pricing = ({ className }: PricingProps) => {
+export const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(false);
 
   return (
-    <section
-      id="pricing"
-      className={cn("relative overflow-hidden py-16 lg:py-24", className)}
-    >
+    <section id="pricing" className="py-16 lg:py-24 relative overflow-hidden">
       <div className="container relative z-10 max-w-6xl">
-        <PageIntro
-          icon={WalletCards}
-          title="为价值付费，不为溢价买单"
-          description="覆盖个人、专业与团队场景的定价方案。认证学生身份可享专业版 5 折优惠。"
-          badge="Simple Pricing"
-          className="mb-12"
-          actions={(
-            <div className="app-surface inline-flex items-center gap-3 rounded-full px-4 py-2">
-              <span
-                className={cn(
-                  "text-xs font-bold",
-                  !isAnnual ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                月付
-              </span>
-              <Switch
-                checked={isAnnual}
-                onCheckedChange={setIsAnnual}
-                className="data-[state=checked]:bg-primary"
-              />
-              <span
-                className={cn(
-                  "text-xs font-bold",
-                  isAnnual ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                年付
-                <span className="ml-1 text-[10px] font-black text-emerald-500">
-                  -20%
-                </span>
-              </span>
-            </div>
-          )}
-        />
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="flex items-center justify-center gap-2 text-primary font-mono text-[10px] font-black tracking-[0.3em] uppercase mb-4">
+            <span className="opacity-40">06 /</span>
+            <span>Simple Pricing</span>
+          </div>
+          <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-6 text-foreground leading-tight">
+            为价值付费，<br /><span className="text-primary">不为溢价买单</span>
+          </h2>
+          <p className="text-muted-foreground text-base md:text-lg font-medium">
+            无论是学生毕设还是企业开发，我们都提供了极具性价比的方案。
+            <br className="hidden md:block" />
+            认证学生身份可享 <span className="text-foreground font-bold underline decoration-primary decoration-2 underline-offset-4">5 折优惠</span>。
+          </p>
+
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <span className={`text-sm font-bold ${!isAnnual ? "text-foreground" : "text-muted-foreground"}`}>月付</span>
+            <Switch
+              checked={isAnnual}
+              onCheckedChange={setIsAnnual}
+              className="data-[state=checked]:bg-primary"
+            />
+            <span className={`text-sm font-bold ${isAnnual ? "text-foreground" : "text-muted-foreground"}`}>
+              年付 <span className="text-xs text-green-500 font-black ml-1">-20%</span>
+            </span>
+          </div>
+        </div>
 
         <div className="grid gap-6 md:grid-cols-3 max-w-6xl mx-auto">
           {plans.map((plan) => (
             <Card 
               key={plan.id} 
               className={cn(
-                "relative flex flex-col app-interactive",
+                "relative flex flex-col border-none transition-all duration-300",
                 plan.popular 
-                  ? "app-surface-strong z-10 border-2 border-primary/25 shadow-2xl shadow-primary/15 md:-translate-y-1" 
-                  : "app-surface hover:border-primary/20 hover:shadow-xl"
+                  ? "bg-background/60 backdrop-blur-xl shadow-2xl shadow-primary/10 border-2 border-primary/20 z-10 scale-105" 
+                  : "bg-background/40 backdrop-blur-md hover:bg-background/60 shadow-lg border border-white/10"
               )}
             >
               {plan.popular && (
@@ -165,7 +148,7 @@ export const Pricing = ({ className }: PricingProps) => {
                     "w-full h-11 rounded-xl text-sm font-bold shadow-md transition-all",
                     plan.popular 
                       ? "bg-primary text-white hover:bg-primary/90 shadow-primary/20" 
-                      : "bg-background text-foreground border-2 border-primary/10 hover:bg-primary/5 hover:border-primary/20"
+                      : "bg-white text-foreground border-2 border-primary/5 hover:bg-primary/5 hover:border-primary/10"
                   )}
                 >
                   {plan.cta}
@@ -177,9 +160,9 @@ export const Pricing = ({ className }: PricingProps) => {
 
         {/* Student Discount Banner */}
         <div className="mt-16 mx-auto max-w-3xl">
-          <div className="app-surface rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 p-6 flex flex-col sm:flex-row items-center justify-between gap-6 border-primary/10">
+          <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6 border border-primary/5">
             <div className="flex items-center gap-4">
-              <div className="app-surface rounded-xl p-3 shadow-sm">
+              <div className="bg-white p-3 rounded-xl shadow-sm">
                 <GraduationCap className="size-6 text-primary" />
               </div>
               <div>
