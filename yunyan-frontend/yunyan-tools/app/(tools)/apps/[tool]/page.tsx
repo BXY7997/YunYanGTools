@@ -10,6 +10,7 @@ import {
   LandingWorkspace,
   WorkspaceShell,
 } from "@/components/tools/workspace-shell"
+import { SqlToTableWorkspace } from "@/features/tools/sql-to-table"
 
 interface ToolDetailPageProps {
   params: Promise<{
@@ -31,6 +32,10 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
 
   if (tool.id === "hx-huitu") {
     redirect("/canvas")
+  }
+
+  if (tool.id === "sql-to-table") {
+    return <SqlToTableWorkspace tool={tool} groupTitle={group?.title} />
   }
 
   if (tool.workspaceType === "canvas") {
