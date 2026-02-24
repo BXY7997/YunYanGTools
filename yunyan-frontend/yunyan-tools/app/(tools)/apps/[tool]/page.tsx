@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 
 import {
   getToolByRoute,
@@ -12,13 +12,14 @@ import {
 } from "@/components/tools/workspace-shell"
 
 interface ToolDetailPageProps {
-  params: {
+  params: Promise<{
     tool: string
-  }
+  }>
 }
 
-export default function ToolDetailPage({ params }: ToolDetailPageProps) {
-  const route = `/apps/${params.tool}`
+export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
+  const { tool: toolId } = await params
+  const route = `/apps/${toolId}`
   const tool = getToolByRoute(route)
 
   if (!tool) {
@@ -27,6 +28,10 @@ export default function ToolDetailPage({ params }: ToolDetailPageProps) {
 
   const group = getToolGroupByChildId(tool.id)
   const config = getWorkspaceConfigForTool(tool)
+
+  if (tool.id === "hx-huitu") {
+    redirect("/canvas")
+  }
 
   if (tool.workspaceType === "canvas") {
     return (

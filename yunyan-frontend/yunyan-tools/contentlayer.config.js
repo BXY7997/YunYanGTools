@@ -145,6 +145,11 @@ export default makeSource({
   contentDirPath: "./content",
   documentTypes: [Page, Doc, Guide, Post, Author],
   mdx: {
+    mdxOptions: (options) => {
+      // Force production-style JSX output to avoid server runtime issues on Next 15.
+      options.development = false
+      return options
+    },
     remarkPlugins: [remarkGfm],
     rehypePlugins: [
       rehypeSlug,

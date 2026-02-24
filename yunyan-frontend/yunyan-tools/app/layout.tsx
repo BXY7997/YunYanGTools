@@ -1,4 +1,5 @@
 import localFont from "next/font/local"
+import type { Metadata, Viewport } from "next"
 
 import "@/styles/globals.css"
 import { siteConfig } from "@/config/site"
@@ -33,12 +34,13 @@ interface RootLayoutProps {
   children: React.ReactNode
 }
 
-export const metadata = {
+export const metadata: Metadata = {
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
+  metadataBase: new URL(siteConfig.url),
   keywords: [
     "Next.js",
     "React",
@@ -48,10 +50,6 @@ export const metadata = {
   ],
   authors: [{ name: "shadcn" }],
   creator: "shadcn",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -65,6 +63,13 @@ export const metadata = {
     description: siteConfig.description,
     creator: "@shadcn",
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
 }
 
 export default function RootLayout({ children }: RootLayoutProps) {

@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
+      "@canvas/*": ["./features/canvas-marketing/*"],
       "contentlayer/generated": ["./.contentlayer/generated"]
     },
     "plugins": [

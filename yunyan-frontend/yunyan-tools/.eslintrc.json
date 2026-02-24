@@ -26,6 +26,54 @@
     {
       "files": ["*.ts", "*.tsx"],
       "parser": "@typescript-eslint/parser"
+    },
+    {
+      "files": ["features/canvas-marketing/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react-router-dom",
+                "message": "Canvas marketing is hosted by Next App Router. Avoid react-router-dom."
+              },
+              {
+                "name": "next/link",
+                "message": "Use CanvasLink from @canvas/components/canvas-link for in-site navigation."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@/*"],
+                "message": "Inside canvas-marketing, use @canvas/* or relative imports."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["features/canvas-marketing/components/canvas-link.tsx"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "react-router-dom",
+                "message": "Canvas marketing is hosted by Next App Router. Avoid react-router-dom."
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@/*"],
+                "message": "Inside canvas-marketing, use @canvas/* or relative imports."
+              }
+            ]
+          }
+        ]
+      }
     }
   ]
 }

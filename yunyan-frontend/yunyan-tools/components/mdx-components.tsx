@@ -1,10 +1,20 @@
+"use client"
+
 import * as React from "react"
-import Image from "next/image"
+import Image, { type ImageProps } from "next/image"
 import { useMDXComponent } from "next-contentlayer/hooks"
 
 import { cn } from "@/lib/utils"
 import { Callout } from "@/components/callout"
 import { MdxCard } from "@/components/mdx-card"
+
+type MDXImageProps = Omit<ImageProps, "alt"> & {
+  alt?: string
+}
+
+function MDXImage({ alt = "", ...props }: MDXImageProps) {
+  return <Image alt={alt} {...props} />
+}
 
 const components = {
   h1: ({ className, ...props }) => (
@@ -147,7 +157,7 @@ const components = {
       {...props}
     />
   ),
-  Image,
+  Image: MDXImage,
   Callout,
   Card: MdxCard,
 }
@@ -157,7 +167,7 @@ interface MdxProps {
 }
 
 export function Mdx({ code }: MdxProps) {
-  const Component = useMDXComponent(code)
+  const Component = useMDXComponent(code, { React })
 
   return (
     <div className="mdx">

@@ -10,8 +10,8 @@ interface ToolsLayoutProps {
   children: React.ReactNode
 }
 
-export default function ToolsLayout({ children }: ToolsLayoutProps) {
-  const cookieStore = cookies()
+export default async function ToolsLayout({ children }: ToolsLayoutProps) {
+  const cookieStore = await cookies()
   const cookieState = parseSidebarCollapsedState(
     cookieStore.get(SIDEBAR_COOKIE_KEY)?.value
   )
