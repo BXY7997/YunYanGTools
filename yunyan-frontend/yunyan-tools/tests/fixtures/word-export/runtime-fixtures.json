@@ -1,0 +1,29 @@
+{
+  "fixtures": [
+    {
+      "name": "long-text-wrap-use-case",
+      "file": "features/tools/use-case-doc/services/use-case-doc-word-export.ts",
+      "tokens": ["word-break:break-word", "overflow-wrap:anywhere"]
+    },
+    {
+      "name": "long-text-wrap-test-doc",
+      "file": "features/tools/test-doc/services/test-doc-word-export.ts",
+      "tokens": ["word-break:break-word", "overflow-wrap:anywhere"]
+    },
+    {
+      "name": "multi-column-word-table",
+      "file": "features/tools/word-table/services/word-table-word-export.ts",
+      "tokens": ["<colgroup>", "table-layout:fixed", "buildWordTableColumnWidths"]
+    },
+    {
+      "name": "empty-value-sql",
+      "file": "features/tools/sql-to-table/services/sql-to-table-word-export.ts",
+      "tokens": ["无字段数据", "styleSpec.bodyCellFallback"]
+    },
+    {
+      "name": "preset-wired-workspace",
+      "file": "features/tools/sql-to-table/components/sql-to-table-workspace.tsx",
+      "tokens": ["resolveToolWordExportPresetId", "presetId: exportPresetId"]
+    }
+  ]
+}

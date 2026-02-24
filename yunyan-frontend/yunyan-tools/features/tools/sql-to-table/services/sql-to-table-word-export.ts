@@ -1,38 +1,26 @@
-/**
- * Word 导出模块
- *
- * 生成符合 GB/T 7714-2015 标准的三线表 Word 文档。
- *
- * 三线表规范要点（来源：GB/T 7714-2015 / 各高校论文模板）：
- * ─────────────────────────────────────────────────
- *  顶线（top rule）    → 1.5 pt solid #000
- *  栏目线（mid rule）  → 0.75 pt solid #000（thead 下边框）
- *  底线（bottom rule） → 1.5 pt solid #000
- *  无竖线、无其他横线
- *  表名："表 X-Y <表名>" 居中，黑体/宋体 五号（10.5pt）加粗
- *  表头文字：宋体 五号（10.5pt）加粗
- *  表体文字：宋体 五号（10.5pt）
- *  表注：宋体 小五号（9pt）
- *
- * 普通表格（normal）直接使用全边框 1pt #000。
- *
- * 导出格式为 HTML，以 `application/msword` MIME 下载时
- * Word 会完整解析 CSS border、mso-* 属性。
- */
-
+import { sqlToTableColumnHeaderMap } from "@/features/tools/sql-to-table/constants/sql-to-table-config"
+import { assertWordExportHtml } from "@/features/tools/shared/services/word-export-guard"
 import {
-  sqlToTableColumnHeaderMap,
-} from "@/features/tools/sql-to-table/constants/sql-to-table-config"
+  buildTableCaption,
+  toolsWordCaptionRules,
+} from "@/features/tools/shared/constants/word-caption-config"
+import { resolveWordExportPreset } from "@/features/tools/shared/constants/word-export-presets"
+import {
+  createWordDocumentBlob,
+  createWordHtmlDocument,
+  resolveWordPageOrientation,
+} from "@/features/tools/shared/services/word-export-engine"
+import {
+  sqlToTablePaperTemplateSpecs,
+  type SqlToTablePaperTemplateSpec,
+} from "@/features/tools/sql-to-table/constants/sql-to-table-paper-template"
+import { resolveSqlToTableColumnLayout } from "@/features/tools/sql-to-table/constants/sql-to-table-export-layout"
 import { buildPreviewRows } from "@/features/tools/sql-to-table/services/sql-to-table-transformer"
 import type {
   ExportColumnKey,
   ExportTableFormat,
   SqlToTableExportRequest,
 } from "@/features/tools/sql-to-table/types/sql-to-table"
-
-/* ------------------------------------------------------------------ */
-/*  Utilities                                                          */
-/* ------------------------------------------------------------------ */
 
 function escapeHtml(value: string | number) {
   return String(value)
@@ -43,200 +31,248 @@ function escapeHtml(value: string | number) {
     .replace(/'/g, "&#39;")
 }
 
-/* ------------------------------------------------------------------ */
-/*  Table Row Builders                                                 */
-/* ------------------------------------------------------------------ */
-
-function buildHeaderCells(columns: ExportColumnKey[]) {
-  return columns
-    .map(
-      (col) =>
-        `<td style="font-weight:bold;font-family:'黑体','SimHei',sans-serif;">${escapeHtml(
-          sqlToTableColumnHeaderMap[col]
-        )}</td>`
-    )
-    .join("")
+function normalizeCellValue(
+  value: string | number | null | undefined,
+  fallback: string
+) {
+  if (value === null || value === undefined) {
+    return escapeHtml(fallback)
+  }
+  const normalized = String(value).trim()
+  return normalized ? escapeHtml(normalized) : escapeHtml(fallback)
 }
 
-function buildBodyRow(
-  values: Record<ExportColumnKey, string | number>,
-  columns: ExportColumnKey[]
+function shouldUseLandscapePage(columns: ExportColumnKey[]) {
+  if (columns.length >= 7) {
+    return true
+  }
+  return (
+    columns.length >= 6 &&
+    columns.includes("constraint") &&
+    columns.includes("remark")
+  )
+}
+
+function resolveExportColumns(columns: ExportColumnKey[]) {
+  if (columns.length === 0) {
+    throw new Error("未选择导出列，无法生成表格。")
+  }
+  return columns
+}
+
+function resolveStyleSpec(templateId: string) {
+  const styleSpec = (sqlToTablePaperTemplateSpecs as Record<
+    string,
+    SqlToTablePaperTemplateSpec | undefined
+  >)[templateId]
+  if (!styleSpec) {
+    throw new Error(`未找到论文格式模板：${templateId}`)
+  }
+  return styleSpec
+}
+
+function buildHeaderCells(
+  columns: ExportColumnKey[],
+  format: ExportTableFormat,
+  styleSpec: SqlToTablePaperTemplateSpec,
+  alignmentMode: SqlToTableExportRequest["alignmentMode"]
 ) {
   return columns
-    .map((col) => `<td>${escapeHtml(values[col])}</td>`)
+    .map((column) => {
+      const layout = resolveSqlToTableColumnLayout(column, alignmentMode || "standard")
+      const styles = [
+        "padding:4pt 6pt",
+        "text-align:center",
+        "vertical-align:middle",
+        "font-size:10.5pt",
+        "font-family:'黑体','SimHei',sans-serif",
+        "font-weight:bold",
+        "line-height:1.5",
+        `height:${styleSpec.rowHeightCm}cm`,
+        `width:${layout.width}`,
+        layout.noWrap || styleSpec.headerNoWrap ? "white-space:nowrap" : "white-space:normal",
+      ]
+
+      if (format === "three-line") {
+        styles.push(
+          `border-top:${styleSpec.topRulePt}pt solid #000`,
+          `border-bottom:${styleSpec.midRulePt}pt solid #000`,
+          "border-left:none",
+          "border-right:none"
+        )
+      } else {
+        styles.push(`border:${styleSpec.normalBorderPt}pt solid #000`)
+      }
+
+      return `<th style="${styles.join(";")}">${escapeHtml(sqlToTableColumnHeaderMap[column])}</th>`
+    })
     .join("")
 }
 
-/* ------------------------------------------------------------------ */
-/*  Whole-table Assembly                                               */
-/* ------------------------------------------------------------------ */
-
-function createSingleTableSection(
-  tableIndex: number,
-  totalTables: number,
-  tableName: string,
+function buildBodyRows(
   rows: Record<ExportColumnKey, string | number>[],
   columns: ExportColumnKey[],
   format: ExportTableFormat,
-  chapterIndex: number
+  styleSpec: SqlToTablePaperTemplateSpec,
+  alignmentMode: SqlToTableExportRequest["alignmentMode"]
 ) {
-  const tableNumber = `${chapterIndex}-${tableIndex + 1}`
-  const colCount = columns.length
-
-  // ---------- Three-line table ----------
-  if (format === "three-line") {
-    return `
-    <div style="page-break-inside:avoid;margin-bottom:18pt;">
-      <p style="text-align:center;margin:0 0 6pt 0;font-size:10.5pt;font-weight:bold;font-family:'黑体','SimHei',sans-serif;">
-        表 ${tableNumber} ${escapeHtml(tableName)}
-      </p>
-      <table style="width:100%;border-collapse:collapse;table-layout:auto;font-size:10.5pt;font-family:'宋体','SimSun',serif;" cellpadding="0" cellspacing="0">
-        <thead>
-          <tr style="border-top:1.5pt solid #000;border-bottom:0.75pt solid #000;">
-            ${buildHeaderCells(columns)}
-          </tr>
-        </thead>
-        <tbody>
-          ${rows
-            .map(
-              (row, i) =>
-                `<tr${i === rows.length - 1 ? ' style="border-bottom:1.5pt solid #000;"' : ""}>${buildBodyRow(row, columns)}</tr>`
-            )
-            .join("")}
-        </tbody>
-      </table>
-    </div>`
+  if (rows.length === 0) {
+    const emptyCellStyle = [
+      "padding:6pt",
+      "text-align:center",
+      "vertical-align:middle",
+      "font-size:10.5pt",
+      "font-family:'宋体','SimSun',serif",
+      "line-height:1.5",
+      `height:${styleSpec.rowHeightCm}cm`,
+      format === "three-line"
+        ? `border-bottom:${styleSpec.bottomRulePt}pt solid #000;border-top:none;border-left:none;border-right:none`
+        : `border:${styleSpec.normalBorderPt}pt solid #000`,
+    ].join(";")
+    return `<tr><td colspan="${columns.length}" style="${emptyCellStyle}">无字段数据</td></tr>`
   }
 
-  // ---------- Normal table ----------
-  return `
-    <div style="page-break-inside:avoid;margin-bottom:18pt;">
-      <p style="text-align:center;margin:0 0 6pt 0;font-size:10.5pt;font-weight:bold;font-family:'黑体','SimHei',sans-serif;">
-        表 ${tableNumber} ${escapeHtml(tableName)}
-      </p>
-      <table border="1" style="width:100%;border-collapse:collapse;table-layout:auto;font-size:10.5pt;font-family:'宋体','SimSun',serif;border:1pt solid #000;" cellpadding="0" cellspacing="0">
-        <thead>
-          <tr>${buildHeaderCells(columns)}</tr>
-        </thead>
-        <tbody>
-          ${rows.map((row) => `<tr>${buildBodyRow(row, columns)}</tr>`).join("")}
-        </tbody>
-      </table>
-    </div>`
+  return rows
+    .map((row, rowIndex) => {
+      const isLast = rowIndex === rows.length - 1
+      const cells = columns
+        .map((column) => {
+          const layout = resolveSqlToTableColumnLayout(
+            column,
+            alignmentMode || "standard"
+          )
+          const styles = [
+            "padding:4pt 6pt",
+            `text-align:${layout.align}`,
+            "vertical-align:middle",
+            "font-size:10.5pt",
+            "font-family:'宋体','SimSun',serif",
+            "line-height:1.5",
+            `height:${styleSpec.rowHeightCm}cm`,
+            `word-break:${layout.wordBreak || "break-word"}`,
+            "overflow-wrap:anywhere",
+            layout.noWrap ? "white-space:nowrap" : "white-space:normal",
+          ]
+
+          if (format === "three-line") {
+            styles.push(
+              "border-top:none",
+              "border-left:none",
+              "border-right:none",
+              isLast
+                ? `border-bottom:${styleSpec.bottomRulePt}pt solid #000`
+                : "border-bottom:none"
+            )
+          } else {
+            styles.push(`border:${styleSpec.normalBorderPt}pt solid #000`)
+          }
+
+          return `<td style="${styles.join(";")}">${normalizeCellValue(
+            row[column],
+            styleSpec.bodyCellFallback
+          )}</td>`
+        })
+        .join("")
+
+      return `<tr>${cells}</tr>`
+    })
+    .join("")
 }
 
-/* ------------------------------------------------------------------ */
-/*  Full HTML Document                                                 */
-/* ------------------------------------------------------------------ */
+function buildTableSection(
+  tableIndex: number,
+  tableName: string,
+  tableComment: string | undefined,
+  rows: Record<ExportColumnKey, string | number>[],
+  columns: ExportColumnKey[],
+  format: ExportTableFormat,
+  styleSpec: SqlToTablePaperTemplateSpec,
+  alignmentMode: SqlToTableExportRequest["alignmentMode"]
+) {
+  const caption = buildTableCaption({
+    serial: `${toolsWordCaptionRules.sqlToTable.chapterSerial}-${tableIndex + 1}`,
+    title: tableName,
+    spaceAfterLabel: true,
+  })
+  const tableStyles = [
+    "width:100%",
+    "border-collapse:collapse",
+    "table-layout:auto",
+    "mso-table-lspace:0pt",
+    "mso-table-rspace:0pt",
+    "mso-padding-alt:0pt 4pt 0pt 4pt",
+  ]
+  if (format === "normal") {
+    tableStyles.push(`border:${styleSpec.normalBorderPt}pt solid #000`)
+  }
+
+  return `<div style="page-break-inside:auto;margin-bottom:18pt;">
+    <p style="margin:${styleSpec.captionMarginTopPt}pt 0 ${styleSpec.captionMarginBottomPt}pt 0;text-align:center;font-size:10.5pt;line-height:1.5;font-weight:bold;font-family:'黑体','SimHei',sans-serif;">
+      ${escapeHtml(caption)}
+    </p>
+    <table cellpadding="0" cellspacing="0" style="${tableStyles.join(";")}">
+      <thead style="display:table-header-group;">
+        <tr>
+          ${buildHeaderCells(columns, format, styleSpec, alignmentMode)}
+        </tr>
+      </thead>
+      <tbody>
+        ${buildBodyRows(rows, columns, format, styleSpec, alignmentMode)}
+      </tbody>
+    </table>
+    ${
+      tableComment && tableComment.trim()
+        ? `<p style="margin:4pt 0 0 0;text-align:left;font-size:9pt;line-height:1.4;font-family:'宋体','SimSun',serif;">注：${escapeHtml(tableComment.trim())}</p>`
+        : ""
+    }
+  </div>`
+}
 
 function createWordHtml(
   payload: SqlToTableExportRequest,
-  rowsCollection: Record<ExportColumnKey, string | number>[][]
+  rowsCollection: Record<ExportColumnKey, string | number>[][],
+  columns: ExportColumnKey[]
 ) {
-  const chapterIndex = 1
+  const styleSpec = resolveStyleSpec(payload.paperTemplateId)
+  const preset = resolveWordExportPreset(payload.presetId)
+  const alignmentMode = payload.alignmentMode || preset.defaultAlignmentMode
+  const autoOrientation = shouldUseLandscapePage(columns)
+    ? "landscape"
+    : "portrait"
+  const orientation = resolveWordPageOrientation(
+    payload.orientationMode,
+    autoOrientation
+  )
   const sections = rowsCollection
     .map((rows, index) => {
       const table = payload.tables[index]
-      return createSingleTableSection(
+      const tableName = table.displayName || table.name || `数据表${index + 1}`
+      return buildTableSection(
         index,
-        payload.tables.length,
-        table.displayName || table.name,
+        tableName,
+        table.comment,
         rows,
-        payload.includeColumns,
+        columns,
         payload.format,
-        chapterIndex
+        styleSpec,
+        alignmentMode
       )
     })
     .join("")
 
-  // The style block targets both HTML preview and Word rendering.
-  // `mso-*` properties are Word-specific CSS extensions.
-  return `<!DOCTYPE html>
-<html xmlns:o="urn:schemas-microsoft-com:office:office"
-      xmlns:w="urn:schemas-microsoft-com:office:word"
-      xmlns="http://www.w3.org/TR/REC-html40">
-<head>
-  <meta charset="utf-8" />
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <!--[if gte mso 9]>
-  <xml>
-    <w:WordDocument>
-      <w:View>Print</w:View>
-      <w:Zoom>100</w:Zoom>
-      <w:DoNotOptimizeForBrowser/>
-    </w:WordDocument>
-  </xml>
-  <![endif]-->
-  <title>SQL三线表导出</title>
-  <style>
-    /* ── Page setup (A4) ── */
-    @page {
-      size: 210mm 297mm;
-      margin: 2.54cm 3.17cm 2.54cm 3.17cm;
-      mso-header-margin: 1.5cm;
-      mso-footer-margin: 1.75cm;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      color: #000;
-      font-family: "宋体", "SimSun", serif;
-      font-size: 10.5pt;          /* 五号 */
-      line-height: 1.5;
-      mso-pagination: widow-orphan;
-    }
-
-    /* ── Common table styles ── */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: auto;
-      mso-table-lspace: 0pt;
-      mso-table-rspace: 0pt;
-      mso-padding-alt: 0pt 4pt 0pt 4pt;
-    }
-
-    table td, table th {
-      padding: 4pt 6pt;
-      text-align: center;
-      vertical-align: middle;
-      font-size: 10.5pt;
-      line-height: 1.5;
-      word-break: break-word;
-    }
-
-    /* ── Normal table ── */
-    table[border="1"] td,
-    table[border="1"] th {
-      border: 1pt solid #000;
-    }
-
-    /* ── Three-line table: ensure no extra borders ── */
-    table:not([border]) td,
-    table:not([border]) th {
-      border-left: none;
-      border-right: none;
-      border-top: none;
-      border-bottom: none;
-    }
-  </style>
-</head>
-<body>
-  ${sections}
-</body>
-</html>`
+  return createWordHtmlDocument({
+    title: "SQL三线表导出",
+    bodyHtml: sections,
+    orientation,
+  })
 }
 
-/* ------------------------------------------------------------------ */
-/*  Public API                                                         */
-/* ------------------------------------------------------------------ */
-
 export function createSqlToTableWordBlob(payload: SqlToTableExportRequest) {
+  const exportColumns = resolveExportColumns(payload.includeColumns)
   const rowsCollection = payload.tables.map((table) => {
-    const rows = buildPreviewRows(table, payload.typeCase)
-    return rows.map((row) => {
-      const normalizedRow: Record<ExportColumnKey, string | number> = {
+    const previewRows = buildPreviewRows(table, payload.typeCase)
+    return previewRows.map((row) => {
+      const record: Record<ExportColumnKey, string | number> = {
         index: row.index,
         name: row.name,
         type: row.type,
@@ -246,20 +282,30 @@ export function createSqlToTableWordBlob(payload: SqlToTableExportRequest) {
         remark: row.remark,
       }
 
-      return payload.includeColumns.reduce(
-        (result, key) => ({
+      return exportColumns.reduce(
+        (result, column) => ({
           ...result,
-          [key]: normalizedRow[key],
+          [column]: record[column],
         }),
         {} as Record<ExportColumnKey, string | number>
       )
     })
   })
 
-  const html = createWordHtml(payload, rowsCollection)
-  return new Blob(["\ufeff", html], {
-    type: "application/msword;charset=utf-8",
+  const html = createWordHtml(
+    {
+      ...payload,
+      includeColumns: exportColumns,
+    },
+    rowsCollection,
+    exportColumns
+  )
+  assertWordExportHtml(html, {
+    context: "SQL三线表",
+    requiredTokens: ["<html", "@page", "表 1-", "<table", "border-bottom"],
   })
+
+  return createWordDocumentBlob(html)
 }
 
 export function triggerWordBlobDownload(blob: Blob, fileName: string) {

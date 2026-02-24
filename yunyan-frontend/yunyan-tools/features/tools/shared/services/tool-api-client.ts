@@ -1,4 +1,5 @@
 import { toolsApiConfig } from "@/features/tools/shared/constants/api-config"
+import { extractToolApiErrorCode } from "@/features/tools/shared/constants/tool-copy"
 
 type ToolHttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
 
@@ -16,12 +17,14 @@ interface ToolApiRequestOptions<TBody> {
 export class ToolApiError extends Error {
   status: number
   details: unknown
+  code?: string
 
-  constructor(message: string, status: number, details?: unknown) {
+  constructor(message: string, status: number, details?: unknown, code?: string) {
     super(message)
     this.name = "ToolApiError"
     this.status = status
     this.details = details
+    this.code = code
   }
 }
 
@@ -75,7 +78,7 @@ export class ToolApiClient {
     options: ToolApiRequestOptions<TBody> = {}
   ): Promise<TResponse> {
     if (!this.configured) {
-      throw new ToolApiError("工具服务地址未配置", 0)
+      throw new ToolApiError("工具服务地址未配置", 0, undefined, "API_BASE_URL_MISSING")
     }
 
     const {
@@ -131,7 +134,12 @@ export class ToolApiClient {
           details = await response.text().catch(() => undefined)
         }
 
-        throw new ToolApiError("工具服务请求失败", response.status, details)
+        throw new ToolApiError(
+          "工具服务请求失败",
+          response.status,
+          details,
+          extractToolApiErrorCode(details)
+        )
       }
 
       if (responseType === "blob") {

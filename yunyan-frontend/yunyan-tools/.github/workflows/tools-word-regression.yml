@@ -1,0 +1,52 @@
+name: tools-word-regression
+
+on:
+  pull_request:
+    paths:
+      - "features/tools/**"
+      - "scripts/check-word-export-regression.js"
+      - "scripts/check-word-export-fixtures.js"
+      - "scripts/check-tool-module-admission.js"
+      - "scripts/word-export-regression.config.js"
+      - "docs/standards/word-export-baseline.md"
+      - "docs/standards/tools-modules.md"
+      - "docs/standards/tool-module-admission-checklist.md"
+      - "tests/fixtures/word-export/**"
+      - ".github/workflows/tools-word-regression.yml"
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "features/tools/**"
+      - "scripts/check-word-export-regression.js"
+      - "scripts/check-word-export-fixtures.js"
+      - "scripts/check-tool-module-admission.js"
+      - "scripts/word-export-regression.config.js"
+      - "docs/standards/word-export-baseline.md"
+      - "docs/standards/tools-modules.md"
+      - "docs/standards/tool-module-admission-checklist.md"
+      - "tests/fixtures/word-export/**"
+      - ".github/workflows/tools-word-regression.yml"
+  workflow_dispatch:
+
+jobs:
+  word-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run Word Regression Guard
+        run: node scripts/check-word-export-regression.js
+
+      - name: Run Word Fixture Guard
+        run: node scripts/check-word-export-fixtures.js
+
+      - name: Run Tool Module Admission Guard
+        run: node scripts/check-tool-module-admission.js

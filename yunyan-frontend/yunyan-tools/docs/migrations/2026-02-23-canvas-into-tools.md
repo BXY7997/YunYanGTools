@@ -45,3 +45,9 @@
 - 新增 `pnpm canvas:lint`：校验迁移边界与关键文件完整性
 - 新增 `pnpm canvas:module -- <module-name>`：按标准目录生成模块脚手架
 - 新增 `docs/standards/canvas-marketing-modules.md`：模块化分层与边界规则
+
+## 工具模块规范增强（2026-02-24）
+
+- 新增 `pnpm tools:module -- <tool-id>`：生成 `features/tools/<tool-id>` 标准脚手架
+- 新增 `docs/standards/tools-modules.md`：工具模块分层、接入流程与回归守护规则
+- 新增 CI 工作流：自动执行 `tools:word-regression`，防止导出模板回归

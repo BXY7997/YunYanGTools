@@ -5,7 +5,7 @@ module.exports = {
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
-    "./features/canvas-marketing/**/*.{ts,tsx}",
+    "./features/**/*.{ts,tsx}",
     "./ui/**/*.{ts,tsx}",
     "./content/**/*.{md,mdx}",
   ],

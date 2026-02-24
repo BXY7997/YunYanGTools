@@ -1,8 +1,18 @@
+import type {
+  WordCellAlignmentMode,
+  WordExportPresetId,
+  WordPageOrientationMode,
+} from "@/features/tools/shared/types/word-export"
+
 export type SqlToTableMode = "sql" | "ai"
 
 export type ExportTableFormat = "normal" | "three-line"
 
 export type TypeCaseMode = "upper" | "lower"
+
+export type SqlToTablePaperTemplateId =
+  | "cyt170-standard"
+  | "thesis-classic"
 
 export type ExportColumnKey =
   | "index"
@@ -49,12 +59,18 @@ export interface SqlToTableExportRequest {
   format: ExportTableFormat
   typeCase: TypeCaseMode
   includeColumns: ExportColumnKey[]
+  paperTemplateId: SqlToTablePaperTemplateId
+  orientationMode?: WordPageOrientationMode
+  alignmentMode?: WordCellAlignmentMode
+  presetId?: WordExportPresetId
 }
 
 export interface SqlToTableExportResult {
   blob: Blob
   fileName: string
   source: "local" | "remote"
+  fileFormat?: "doc"
+  message?: string
 }
 
 export interface SqlToTablePreviewRow {

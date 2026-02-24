@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import {
-  AlertCircle,
   Download,
   Loader2,
+  RotateCcw,
   Smile,
   Wand2,
 } from "lucide-react"
@@ -14,17 +14,59 @@ import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { WordExportConfigPanel } from "@/features/tools/shared/components/word-export-config-panel"
+import { ToolCollapsibleFooter } from "@/features/tools/shared/components/tool-collapsible-footer"
+import {
+  ToolConfigSummary,
+  ToolNoticeSlot,
+} from "@/features/tools/shared/components/tool-workspace-primitives"
+import {
+  ToolAiGeneratedDisclaimer,
+  ToolFaqItem,
+  ToolPromoNotice,
+  ToolSectionHeading,
+} from "@/features/tools/shared/components/tool-workspace-modules"
+import {
+  buildTableCaption,
+  toolsWordCaptionRules,
+} from "@/features/tools/shared/constants/word-caption-config"
+import {
+  defaultWordCellAlignmentMode,
+  resolveWordCellAlignmentLabel,
+  wordOrientationOptions,
+} from "@/features/tools/shared/constants/word-export"
+import { toolDraftSchemaVersions } from "@/features/tools/shared/constants/draft-schema"
+import {
+  resolveToolWordExportPresetId,
+  resolveWordExportPreset,
+} from "@/features/tools/shared/constants/word-export-presets"
+import { toolTelemetryActions } from "@/features/tools/shared/constants/tool-telemetry"
+import { useStableTabStageHeight } from "@/features/tools/shared/hooks/use-stable-tab-stage-height"
+import { useLocalDraftState } from "@/features/tools/shared/hooks/use-local-draft"
+import { trackToolEvent } from "@/features/tools/shared/services/tool-telemetry"
+import { smartDocPromoContent } from "@/features/tools/shared/constants/tool-promo"
+import {
+  buildSqlToTableGenerateSuccessNotice,
+  resolveWorkspaceSourceLabel,
+  toolWorkspaceCopy,
+  withNoticeDetail,
+} from "@/features/tools/shared/constants/tool-copy"
+import { toolsWorkspaceLayout } from "@/features/tools/shared/constants/workspace-layout"
+import { resolveToolWorkspaceModules } from "@/features/tools/shared/constants/workspace-modules"
 import {
   sqlToTableColumnHeaderMap,
   sqlToTableColumnOptions,
   sqlToTableDefaultColumns,
   sqlToTableDefaultFormat,
+  sqlToTableDefaultPaperStyle,
   sqlToTableDefaultPresetId,
   sqlToTableDefaultTypeCase,
   sqlToTableExportFormatOptions,
   sqlToTableGuideSteps,
   sqlToTableKeywordList,
   sqlToTableModeTabs,
+  sqlToTablePaperStyleOptions,
+  sqlToTablePaperStyleSpecs,
   sqlToTablePresets,
   sqlToTableSeoParagraph,
   sqlToTableTypeCaseOptions,
@@ -33,16 +75,24 @@ import {
   exportSqlToTableWord,
   generateSqlToTableData,
 } from "@/features/tools/sql-to-table/services/sql-to-table-api"
+import { resolveSqlToTablePreviewCellAlign } from "@/features/tools/sql-to-table/constants/sql-to-table-export-layout"
 import { parseSqlSchemaToTables } from "@/features/tools/sql-to-table/services/sql-schema-parser"
+import { parseSqlSchemaToTablesWithWorker } from "@/features/tools/sql-to-table/services/sql-schema-worker"
+import { getSqlToTableExportPrecheckNotices } from "@/features/tools/sql-to-table/services/sql-to-table-export-precheck"
 import { buildPreviewRows } from "@/features/tools/sql-to-table/services/sql-to-table-transformer"
 import { triggerWordBlobDownload } from "@/features/tools/sql-to-table/services/sql-to-table-word-export"
 import type {
   ExportColumnKey,
   ExportTableFormat,
+  SqlToTablePaperTemplateId,
   SqlTableSchema,
   SqlToTableMode,
   TypeCaseMode,
 } from "@/features/tools/sql-to-table/types/sql-to-table"
+import type {
+  WordCellAlignmentMode,
+  WordPageOrientationMode,
+} from "@/features/tools/shared/types/word-export"
 import type { ToolMenuLinkItem } from "@/types/tools"
 
 /* ================================================================== */
@@ -60,6 +110,13 @@ interface NoticeState {
   text: string
 }
 
+interface ConfigGroupProps {
+  title: string
+  hint: string
+  className?: string
+  children: React.ReactNode
+}
+
 const formatTime = (d: Date) =>
   new Intl.DateTimeFormat("zh-CN", {
     hour: "2-digit",
@@ -71,12 +128,34 @@ const formatTime = (d: Date) =>
 const ensureColumns = (cols: ExportColumnKey[]) =>
   cols.length > 0 ? cols : (["name"] as ExportColumnKey[])
 
-const sourceLabel = (s: "local" | "remote" | null) =>
-  s === "remote"
-    ? "数据源：FastAPI"
-    : s === "local"
-      ? "数据源：本地解析"
-      : "存储模式：本地"
+function resolveOptionLabel<TValue extends string>(
+  options: Array<{ value: TValue; label: string }>,
+  value: TValue
+) {
+  return options.find((option) => option.value === value)?.label || value
+}
+
+const previewLabelByFormat: Record<ExportTableFormat, string> = {
+  normal: "普通表格",
+  "three-line": "三线表",
+}
+
+const ConfigGroup = React.memo(function ConfigGroup({
+  title,
+  hint,
+  className,
+  children,
+}: ConfigGroupProps) {
+  return (
+    <section className={cn("min-w-[200px] space-y-2", className)}>
+      <div className="space-y-0.5">
+        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      </div>
+      {children}
+    </section>
+  )
+})
 
 /* AI presets content for narrative mode */
 const aiPresetContentById: Record<string, string> = {
@@ -125,20 +204,29 @@ const ThreeLineTable = React.memo(function ThreeLineTable({
   typeCase,
   columns,
   format,
+  paperStyleId,
+  alignmentMode,
 }: {
   table: SqlTableSchema
   tableIndex: number
   typeCase: TypeCaseMode
   columns: ExportColumnKey[]
   format: ExportTableFormat
+  paperStyleId: SqlToTablePaperTemplateId
+  alignmentMode: WordCellAlignmentMode
 }) {
   const rows = React.useMemo(
     () => buildPreviewRows(table, typeCase),
     [table, typeCase]
   )
+  const paperStyle = sqlToTablePaperStyleSpecs[paperStyleId]
 
   const isThreeLine = format === "three-line"
-  const caption = `表 1-${tableIndex + 1} ${table.displayName}`
+  const caption = buildTableCaption({
+    serial: `${toolsWordCaptionRules.sqlToTable.chapterSerial}-${tableIndex + 1}`,
+    title: table.displayName,
+    spaceAfterLabel: true,
+  })
 
   return (
     <div className="space-y-1">
@@ -150,27 +238,20 @@ const ThreeLineTable = React.memo(function ThreeLineTable({
       <div className="overflow-x-auto">
         <table
           className={cn(
-            "w-full min-w-[480px] border-collapse text-center text-xs leading-relaxed",
-            isThreeLine
-              ? "border-t-[1.5pt] border-b-[1.5pt] border-t-black border-b-black"
-              : ""
+            "w-full min-w-[480px] border-collapse text-xs leading-relaxed",
+            isThreeLine ? "border-black" : ""
           )}
           style={
             isThreeLine
               ? {
-                  borderTop: "1.5pt solid #000",
-                  borderBottom: "1.5pt solid #000",
+                  borderTop: `${paperStyle.topRulePt}pt solid #000`,
+                  borderBottom: `${paperStyle.bottomRulePt}pt solid #000`,
                 }
               : undefined
           }
         >
           <thead>
             <tr
-              style={
-                isThreeLine
-                  ? { borderBottom: "0.75pt solid #000" }
-                  : undefined
-              }
               className={cn(
                 !isThreeLine && "[&>th]:border [&>th]:border-gray-400"
               )}
@@ -182,6 +263,19 @@ const ThreeLineTable = React.memo(function ThreeLineTable({
                     "px-3 py-2 text-xs font-bold text-foreground",
                     !isThreeLine && "bg-gray-100"
                   )}
+                  style={
+                    isThreeLine
+                      ? {
+                          borderBottom: `${paperStyle.midRulePt}pt solid #000`,
+                          height: `${paperStyle.rowHeightCm}cm`,
+                          whiteSpace: paperStyle.headerNoWrap
+                            ? "nowrap"
+                            : undefined,
+                        }
+                      : {
+                          height: `${paperStyle.rowHeightCm}cm`,
+                        }
+                  }
                 >
                   {sqlToTableColumnHeaderMap[key]}
                 </th>
@@ -216,6 +310,14 @@ const ThreeLineTable = React.memo(function ThreeLineTable({
                     <td
                       key={`${table.id}-${ri}-${key}`}
                       className="px-3 py-1.5 text-xs text-gray-800"
+                      style={{
+                        height: `${paperStyle.rowHeightCm}cm`,
+                        textAlign: resolveSqlToTablePreviewCellAlign(
+                          key,
+                          alignmentMode
+                        ),
+                        verticalAlign: "middle",
+                      }}
                     >
                       {rd[key]}
                     </td>
@@ -241,6 +343,9 @@ const PreviewCard = React.memo(function PreviewCard({
   columns,
   format,
   label,
+  paperStyleId,
+  alignmentMode,
+  selected,
 }: {
   table: SqlTableSchema
   tableIndex: number
@@ -248,20 +353,31 @@ const PreviewCard = React.memo(function PreviewCard({
   columns: ExportColumnKey[]
   format: ExportTableFormat
   label: string
+  paperStyleId: SqlToTablePaperTemplateId
+  alignmentMode: WordCellAlignmentMode
+  selected?: boolean
 }) {
   return (
     <article className="space-y-3">
-      <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/40 p-4">
+      <div
+        className={cn(
+          "tools-preview-shell duration-250 rounded-lg p-4 transition-all ease-out",
+          selected && "shadow-md ring-1 ring-primary/45"
+        )}
+      >
         <ThreeLineTable
           table={table}
           tableIndex={tableIndex}
           typeCase={typeCase}
           columns={columns}
           format={format}
+          paperStyleId={paperStyleId}
+          alignmentMode={alignmentMode}
         />
       </div>
       <p className="text-center text-sm font-medium text-muted-foreground">
         {label}
+        {selected ? "（当前导出）" : ""}
       </p>
     </article>
   )
@@ -284,17 +400,52 @@ export function SqlToTableWorkspace({
     []
   )
   const defaultSqlPreset = sqlPresets[0] || defaultPreset
+  const modeDraft = useLocalDraftState<SqlToTableMode>({
+    storageKey: "tools:draft:sql-to-table:mode:v1",
+    initialValue: "sql",
+    schemaVersion: toolDraftSchemaVersions.sqlToTable,
+  })
+  const sqlInputDraft = useLocalDraftState<string>({
+    storageKey: "tools:draft:sql-to-table:sql-input:v1",
+    initialValue: "",
+    schemaVersion: toolDraftSchemaVersions.sqlToTable,
+  })
+  const aiInputDraft = useLocalDraftState<string>({
+    storageKey: "tools:draft:sql-to-table:ai-input:v1",
+    initialValue: "",
+    schemaVersion: toolDraftSchemaVersions.sqlToTable,
+  })
+  const orientationDraft = useLocalDraftState<WordPageOrientationMode>({
+    storageKey: "tools:draft:sql-to-table:orientation:v1",
+    initialValue: "auto",
+    schemaVersion: toolDraftSchemaVersions.sqlToTable,
+  })
+  const alignmentDraft = useLocalDraftState<WordCellAlignmentMode>({
+    storageKey: "tools:draft:sql-to-table:alignment:v1",
+    initialValue: defaultWordCellAlignmentMode,
+    schemaVersion: toolDraftSchemaVersions.sqlToTable,
+  })
 
   /* ── Core state ── */
-  const [mode, setMode] = React.useState<SqlToTableMode>("sql")
+  const mode = modeDraft.value
+  const setMode = modeDraft.setValue
   const [sqlPresetId, setSqlPresetId] = React.useState("")
   const [aiPresetId, setAiPresetId] = React.useState("")
-  const [sqlInput, setSqlInput] = React.useState("")
-  const [aiInput, setAiInput] = React.useState("")
+  const sqlInput = sqlInputDraft.value
+  const setSqlInput = sqlInputDraft.setValue
+  const aiInput = aiInputDraft.value
+  const setAiInput = aiInputDraft.setValue
+  const orientationMode = orientationDraft.value
+  const setOrientationMode = orientationDraft.setValue
+  const alignmentMode = alignmentDraft.value
+  const setAlignmentMode = alignmentDraft.setValue
   const [format, setFormat] =
     React.useState<ExportTableFormat>(sqlToTableDefaultFormat)
   const [typeCase, setTypeCase] =
     React.useState<TypeCaseMode>(sqlToTableDefaultTypeCase)
+  const [paperStyle, setPaperStyle] = React.useState<SqlToTablePaperTemplateId>(
+    sqlToTableDefaultPaperStyle
+  )
   const [columns, setColumns] = React.useState<ExportColumnKey[]>(
     sqlToTableDefaultColumns
   )
@@ -302,7 +453,7 @@ export function SqlToTableWorkspace({
   const [activeTableId, setActiveTableId] = React.useState("")
   const [notice, setNotice] = React.useState<NoticeState>({
     tone: "info",
-    text: "此功能支持本地解析与远程接口两种模式。",
+    text: toolWorkspaceCopy.sqlToTable.initialNotice,
   })
   const [source, setSource] = React.useState<"local" | "remote" | null>(null)
   const [loading, setLoading] = React.useState<
@@ -312,6 +463,22 @@ export function SqlToTableWorkspace({
 
   /* ── Refs for abort control ── */
   const abortRef = React.useRef<AbortController | null>(null)
+  const sqlContentRef = React.useRef<HTMLDivElement | null>(null)
+  const aiContentRef = React.useRef<HTMLDivElement | null>(null)
+  const tabStageHeight = useStableTabStageHeight(
+    sqlContentRef,
+    aiContentRef,
+    mode === "sql" ? "first" : "second",
+    320
+  )
+  const previewContentRef = React.useRef<HTMLDivElement | null>(null)
+  const exportPresetId = React.useMemo(
+    () => resolveToolWordExportPresetId(tool.route),
+    [tool.route]
+  )
+  const [previewStageHeight, setPreviewStageHeight] = React.useState<
+    number | null
+  >(null)
 
   /* ── Header status ── */
   const { setWorkspaceHeaderStatus } = useWorkspaceHeaderStatus()
@@ -319,6 +486,18 @@ export function SqlToTableWorkspace({
   /* ── Derived values ── */
   const activeInput = mode === "sql" ? sqlInput : aiInput
   const visibleColumns = React.useMemo(() => ensureColumns(columns), [columns])
+  const formatLabel = React.useMemo(
+    () => resolveOptionLabel(sqlToTableExportFormatOptions, format),
+    [format]
+  )
+  const typeCaseLabel = React.useMemo(
+    () => resolveOptionLabel(sqlToTableTypeCaseOptions, typeCase),
+    [typeCase]
+  )
+  const paperStyleLabel = React.useMemo(
+    () => resolveOptionLabel(sqlToTablePaperStyleOptions, paperStyle),
+    [paperStyle]
+  )
 
   /* ── Debounced auto-preview (SQL mode only, 500ms) ── */
   const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | null>(
@@ -327,18 +506,22 @@ export function SqlToTableWorkspace({
   React.useEffect(() => {
     if (mode !== "sql" || !sqlInput.trim()) return
 
+    let cancelled = false
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
     debounceTimer.current = setTimeout(() => {
-      const parsed = parseSqlSchemaToTables(sqlInput)
-      if (parsed.length > 0) {
+      void parseSqlSchemaToTablesWithWorker(sqlInput).then((parsed) => {
+        if (cancelled || parsed.length === 0) {
+          return
+        }
         setTables(parsed)
         setActiveTableId((prev) =>
           parsed.some((t) => t.id === prev) ? prev : parsed[0]?.id || ""
         )
-      }
+      })
     }, 500)
 
     return () => {
+      cancelled = true
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
     }
   }, [sqlInput, mode])
@@ -349,6 +532,13 @@ export function SqlToTableWorkspace({
       setNotice({ tone, text })
       setSource(src)
       setSavedAt(new Date())
+      trackToolEvent({
+        tool: "sql-to-table",
+        action: toolTelemetryActions.workspaceNotice,
+        status: tone === "error" ? "error" : tone === "success" ? "success" : "info",
+        source: src || undefined,
+        message: text,
+      })
     },
     []
   )
@@ -360,7 +550,7 @@ export function SqlToTableWorkspace({
       const inp = payload?.input ?? (m === "sql" ? sqlInput : aiInput)
 
       if (!inp.trim()) {
-        updateNotice("error", "请输入CREATE TABLE语句或描述信息后再生成。")
+        updateNotice("error", toolWorkspaceCopy.sqlToTable.generateInputRequired)
         setTables([])
         return
       }
@@ -385,18 +575,25 @@ export function SqlToTableWorkspace({
         )
 
         if (result.tables.length === 0) {
-          updateNotice("error", "未识别到表结构，请检查输入格式。", result.source)
+          updateNotice(
+            "error",
+            withNoticeDetail(toolWorkspaceCopy.sqlToTable.generateNoTable, result.message),
+            result.source
+          )
           return
         }
 
         updateNotice(
           "success",
-          `已生成 ${result.tables.length} 张数据表，支持多表批量导出。`,
+          withNoticeDetail(
+            buildSqlToTableGenerateSuccessNotice(result.tables.length),
+            result.message
+          ),
           result.source
         )
       } catch (err) {
         if ((err as Error).name === "AbortError") return
-        updateNotice("error", "生成失败，请稍后重试或检查接口配置。")
+        updateNotice("error", toolWorkspaceCopy.common.generateFailed)
       } finally {
         setLoading(null)
       }
@@ -408,7 +605,7 @@ export function SqlToTableWorkspace({
   const handleExport = React.useCallback(async () => {
     const cols = ensureColumns(columns)
     if (!activeInput.trim() && tables.length === 0) {
-      updateNotice("error", "请先输入内容后再导出。")
+      updateNotice("error", toolWorkspaceCopy.sqlToTable.exportInputRequired)
       return
     }
 
@@ -419,12 +616,14 @@ export function SqlToTableWorkspace({
     setLoading("export")
     try {
       let exportTables = tables
+      let generateMessage = ""
 
       if (activeInput.trim()) {
         const gen = await generateSqlToTableData(
           { input: activeInput, mode, typeCase },
           { preferRemote: true, signal: controller.signal }
         )
+        generateMessage = gen.message || ""
         if (gen.tables.length > 0) {
           exportTables = gen.tables
           setTables(gen.tables)
@@ -437,23 +636,62 @@ export function SqlToTableWorkspace({
       }
 
       if (exportTables.length === 0) {
-        updateNotice("error", "未识别到可导出的表结构，请检查输入内容。")
+        updateNotice("error", toolWorkspaceCopy.sqlToTable.exportNoTable)
         return
       }
 
+      const precheckNotices = getSqlToTableExportPrecheckNotices({
+        tables: exportTables,
+        columns: cols,
+        format,
+        typeCase,
+        orientationMode,
+        alignmentMode,
+        presetId: exportPresetId,
+      })
+      const precheckMessage = precheckNotices.join("；")
+
       const exported = await exportSqlToTableWord(
-        { tables: exportTables, format, typeCase, includeColumns: cols },
+        {
+          tables: exportTables,
+          format,
+          typeCase,
+          includeColumns: cols,
+          paperTemplateId: paperStyle,
+          orientationMode,
+          alignmentMode,
+          presetId: exportPresetId,
+        },
         { preferRemote: true, signal: controller.signal }
       )
       triggerWordBlobDownload(exported.blob, exported.fileName)
-      updateNotice("success", "Word文档已导出。", exported.source)
+      const exportMessage = [generateMessage, precheckMessage, exported.message]
+        .filter(Boolean)
+        .join("；")
+      updateNotice(
+        "success",
+        withNoticeDetail(toolWorkspaceCopy.common.exportWordSuccess, exportMessage),
+        exported.source
+      )
     } catch (err) {
       if ((err as Error).name === "AbortError") return
-      updateNotice("error", "导出失败，请稍后重试。")
+      updateNotice("error", toolWorkspaceCopy.common.exportFailed)
     } finally {
       setLoading(null)
     }
-  }, [activeInput, columns, format, mode, tables, typeCase, updateNotice])
+  }, [
+    activeInput,
+    columns,
+    format,
+    alignmentMode,
+    exportPresetId,
+    mode,
+    orientationMode,
+    paperStyle,
+    tables,
+    typeCase,
+    updateNotice,
+  ])
 
   /* ── Preset application ── */
   const handleApplyPreset = React.useCallback(
@@ -481,7 +719,7 @@ export function SqlToTableWorkspace({
         void handleGenerate({ input: content, mode: targetMode })
       }
     },
-    [handleGenerate, mode]
+    [handleGenerate, mode, setAiInput, setMode, setSqlInput]
   )
 
   /* ── Column toggle ── */
@@ -492,6 +730,16 @@ export function SqlToTableWorkspace({
         : [...prev, col]
     )
   }, [])
+
+  const handleResetRecommended = React.useCallback(() => {
+    setFormat(sqlToTableDefaultFormat)
+    setTypeCase(sqlToTableDefaultTypeCase)
+    setColumns(sqlToTableDefaultColumns)
+    setPaperStyle(sqlToTableDefaultPaperStyle)
+    setOrientationMode("auto")
+    setAlignmentMode(defaultWordCellAlignmentMode)
+    updateNotice("success", toolWorkspaceCopy.sqlToTable.resetRecommended)
+  }, [setAlignmentMode, setOrientationMode, updateNotice])
 
   /* ── Preview data ── */
   const fallbackTable = React.useMemo(
@@ -515,6 +763,75 @@ export function SqlToTableWorkspace({
     const idx = previewTables.findIndex((t) => t.id === activeTable.id)
     return idx >= 0 ? idx : 0
   }, [activeTable, previewTables])
+  const sqlToTableConfigSummary = React.useMemo(
+    () => [
+      { key: "mode", label: "模式", value: mode === "sql" ? "SQL生成" : "AI生成" },
+      { key: "format", label: "导出格式", value: formatLabel },
+      {
+        key: "orientation",
+        label: "页面方向",
+        value:
+          wordOrientationOptions.find((option) => option.value === orientationMode)
+            ?.label || orientationMode,
+      },
+      {
+        key: "alignment",
+        label: "对齐策略",
+        value: resolveWordCellAlignmentLabel(alignmentMode),
+      },
+      {
+        key: "export-preset",
+        label: "导出预设",
+        value: resolveWordExportPreset(exportPresetId).label,
+      },
+      { key: "template", label: "论文模板", value: paperStyleLabel },
+      { key: "type-case", label: "类型大小写", value: typeCaseLabel },
+      { key: "columns", label: "导出列数", value: `${visibleColumns.length}列` },
+      activeTable
+        ? {
+            key: "active-table",
+            label: "当前表字段",
+            value: `${activeTable.columns.length}个`,
+          }
+        : {
+            key: "active-table",
+            label: "当前表字段",
+            value: "0个",
+          },
+    ],
+    [
+      activeTable,
+      alignmentMode,
+      formatLabel,
+      mode,
+      orientationMode,
+      exportPresetId,
+      paperStyleLabel,
+      typeCaseLabel,
+      visibleColumns.length,
+    ]
+  )
+  const workspaceModules = React.useMemo(
+    () => resolveToolWorkspaceModules(tool.route),
+    [tool.route]
+  )
+
+  React.useEffect(() => {
+    const activePanel = previewContentRef.current
+    if (!activePanel) return
+
+    const updateHeight = () => {
+      setPreviewStageHeight(activePanel.offsetHeight)
+    }
+
+    updateHeight()
+
+    if (typeof ResizeObserver === "undefined") return
+    const resizeObserver = new ResizeObserver(() => updateHeight())
+    resizeObserver.observe(activePanel)
+
+    return () => resizeObserver.disconnect()
+  }, [activeTable?.id, format, paperStyle, typeCase, visibleColumns])
 
   /* ── Header sync ── */
   React.useEffect(() => {
@@ -527,7 +844,7 @@ export function SqlToTableWorkspace({
       badge: tool.badge,
       savedText: notice.text,
       savedAtLabel: formatTime(savedAt),
-      saveModeLabel: sourceLabel(source),
+      saveModeLabel: resolveWorkspaceSourceLabel("sql-to-table", source),
     })
   }, [
     groupTitle,
@@ -552,8 +869,11 @@ export function SqlToTableWorkspace({
   /* ================================================================ */
 
   return (
-    <div className="relative -m-3 min-h-[calc(100vh-3.5rem)] overflow-hidden bg-white bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] md:-m-4">
-      <div className="mx-auto w-full max-w-7xl space-y-12 px-5 py-8 md:px-8 lg:px-12">
+    <div
+      data-tools-workspace-main
+      className="tools-word-theme tools-paper-bg relative -m-3 min-h-[calc(100vh-3.5rem)] overflow-hidden md:-m-4"
+    >
+      <div className={toolsWorkspaceLayout.container}>
         {/* ─────────────────── HERO ─────────────────── */}
         <header className="space-y-4 text-center">
           <h1 className="sr-only">
@@ -572,39 +892,21 @@ export function SqlToTableWorkspace({
         </header>
 
         {/* ─────────────── AI PROMOTION BANNER ──────────────── */}
-        <section className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-100 via-orange-50 to-yellow-100 p-5 shadow-lg md:flex-row md:items-center">
-          <div className="flex-1 space-y-2">
-            <p className="inline-flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-              <Wand2 className="size-3.5" />
-              试试新功能 智能文档生成
-            </p>
-            <h3 className="text-xl font-semibold text-amber-900">
-              全流程智能写作，复杂文档也能一键搞定
-            </h3>
-            <p className="text-sm text-amber-900/80">
-              借助 AI Agent
-              自动完成需求拆解、章节撰写、表格图表插入与排版，特别适合论文、实验报告、
-              项目汇报等高标准文档场景，节省 80% 撰写时间。
-            </p>
-          </div>
-          <button
-            type="button"
-            className="inline-flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md bg-amber-500 px-3 text-sm font-medium text-white shadow-md transition-colors hover:bg-amber-500/90 md:w-auto"
-          >
-            立即体验
-          </button>
-        </section>
+        {workspaceModules.promoNotice ? (
+          <ToolPromoNotice
+            content={smartDocPromoContent}
+            icon={<Wand2 className="size-3.5" />}
+          />
+        ) : null}
 
         {/* ─────────────── MAIN FORM ──────────────── */}
-        <section className="space-y-6">
-          <div>
-            <h2 className="mb-2 text-2xl font-semibold text-foreground">
-              开始使用 （支持单表和多表）
-            </h2>
-            <p className="mb-2 text-sm text-muted-foreground">
-              选择SQL生成或AI生成来创建三线表文档
-            </p>
-          </div>
+        <section className={toolsWorkspaceLayout.surfaceSection}>
+          {workspaceModules.sectionHeading ? (
+            <ToolSectionHeading
+              title="开始使用 （支持单表和多表）"
+              description="选择SQL生成或AI生成来创建三线表文档"
+            />
+          ) : null}
 
           <div className="space-y-6">
             {/* Mode Tabs */}
@@ -613,71 +915,122 @@ export function SqlToTableWorkspace({
               onValueChange={(v) => setMode(v as SqlToTableMode)}
               className="space-y-6"
             >
-              <TabsList className="grid h-9 w-full grid-cols-2 rounded-lg p-[3px]">
+              <TabsList className="grid h-10 w-full grid-cols-2 rounded-lg p-1">
                 {sqlToTableModeTabs.map((tab) => (
                   <TabsTrigger
                     key={tab.value}
                     value={tab.value}
-                    className="h-[calc(100%-1px)] cursor-pointer rounded-md text-sm font-medium"
+                    className="tools-word-button-transition h-full cursor-pointer rounded-md px-3 py-0 text-sm font-medium leading-none"
                   >
                     {tab.label}
                   </TabsTrigger>
                 ))}
               </TabsList>
 
-              {/* SQL */}
-              <TabsContent value="sql" className="space-y-6">
-                <textarea
-                  value={sqlInput}
-                  onChange={(e) => setSqlInput(e.target.value)}
-                  placeholder="请输入CREATE TABLE语句或表结构信息..."
-                  className="min-h-[280px] w-full resize-y overflow-auto rounded-md border border-input bg-transparent px-4 py-3 font-mono text-sm leading-relaxed shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </TabsContent>
+              <div
+                className="relative min-h-[320px] overflow-hidden transition-[height] duration-300 ease-out"
+                style={tabStageHeight ? { height: `${tabStageHeight}px` } : undefined}
+              >
+                {/* SQL */}
+                <TabsContent
+                  forceMount
+                  ref={sqlContentRef}
+                  value="sql"
+                  className={cn(
+                    "mt-0 space-y-6 transition-opacity duration-200 ease-out",
+                    mode === "sql"
+                      ? "relative opacity-100"
+                      : "pointer-events-none absolute inset-0 opacity-0"
+                  )}
+                >
+                  <textarea
+                    value={sqlInput}
+                    onChange={(e) => setSqlInput(e.target.value)}
+                    placeholder="请输入CREATE TABLE语句或表结构信息..."
+                    className="min-h-[280px] w-full resize-y overflow-auto rounded-md border border-input bg-transparent px-4 py-3 font-mono text-sm leading-relaxed shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </TabsContent>
 
-              {/* AI */}
-              <TabsContent value="ai" className="space-y-4">
-                <div className="flex flex-wrap gap-2">
-                  {sqlToTablePresets.map((preset) => (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => handleApplyPreset(preset.id, "ai")}
-                      className={cn(
-                        "cursor-pointer rounded-md border px-3 py-1.5 text-xs transition-colors duration-150",
-                        aiPresetId === preset.id
-                          ? "border-foreground/25 bg-foreground/5 font-medium text-foreground"
-                          : "border-border bg-card text-muted-foreground hover:border-foreground/20 hover:text-foreground"
-                      )}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-                <textarea
-                  value={aiInput}
-                  onChange={(e) => setAiInput(e.target.value)}
-                  placeholder="请描述您的数据库表结构需求，AI将自动为您生成三线表文档..."
-                  className="min-h-[280px] w-full resize-y overflow-auto rounded-md border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              </TabsContent>
+                {/* AI */}
+                <TabsContent
+                  forceMount
+                  ref={aiContentRef}
+                  value="ai"
+                  className={cn(
+                    "mt-0 space-y-4 transition-opacity duration-200 ease-out",
+                    mode === "ai"
+                      ? "relative opacity-100"
+                      : "pointer-events-none absolute inset-0 opacity-0"
+                  )}
+                >
+                  <div className="flex flex-wrap gap-2">
+                    {sqlToTablePresets.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => handleApplyPreset(preset.id, "ai")}
+                        className={cn(
+                          "tools-word-button-transition cursor-pointer rounded-md border px-3 py-1.5 text-xs transition-colors duration-150",
+                          aiPresetId === preset.id
+                            ? "border-foreground/25 bg-foreground/5 font-medium text-foreground"
+                            : "border-border bg-card text-muted-foreground hover:border-foreground/20 hover:text-foreground"
+                        )}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    placeholder="请描述您的数据库表结构需求，AI将自动为您生成三线表文档..."
+                    className="min-h-[280px] w-full resize-y overflow-auto rounded-md border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
+                  />
+                </TabsContent>
+              </div>
             </Tabs>
 
-            {/* Options Grid */}
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Format */}
-              <fieldset className="rounded-lg border border-border/60 bg-muted/30 px-5 py-4">
-                <legend className="sr-only">导出表格类型</legend>
-                <p className="text-sm font-semibold text-foreground">
-                  导出表格类型
-                </p>
-                <p className="mb-3 mt-0.5 text-xs text-muted-foreground">
-                  请选择导出普通表格/三线表
-                </p>
+            {/* Options Strip */}
+            <div className="flex flex-wrap items-start gap-x-8 gap-y-5 rounded-lg bg-background/20 p-1">
+              <div className="flex w-full justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={handleResetRecommended}
+                  className="tools-word-button-transition inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 text-xs text-muted-foreground transition-colors hover:border-primary/35 hover:text-foreground"
+                >
+                  <RotateCcw className="size-3.5" />
+                  恢复推荐配置
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sqlInputDraft.clearDraft()
+                    aiInputDraft.clearDraft()
+                    modeDraft.clearDraft()
+                    orientationDraft.clearDraft()
+                    alignmentDraft.clearDraft()
+                    setSqlInput("")
+                    setAiInput("")
+                    setMode("sql")
+                    setOrientationMode("auto")
+                    setAlignmentMode(defaultWordCellAlignmentMode)
+                    setTables([])
+                    setActiveTableId("")
+                    updateNotice("success", toolWorkspaceCopy.common.clearDraftSuccess)
+                  }}
+                  className="tools-word-button-transition inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-card px-3 text-xs text-muted-foreground transition-colors hover:border-primary/35 hover:text-foreground"
+                >
+                  清空草稿
+                </button>
+              </div>
+              <ConfigGroup
+                title="导出表格类型"
+                hint="选择普通表格或三线表"
+              >
                 <RadioGroup
                   value={format}
                   onValueChange={(v) => setFormat(v as ExportTableFormat)}
-                  className="flex items-center gap-5"
+                  className="flex flex-wrap items-center gap-x-5 gap-y-2"
                 >
                   {sqlToTableExportFormatOptions.map((opt) => (
                     <div
@@ -698,21 +1051,13 @@ export function SqlToTableWorkspace({
                     </div>
                   ))}
                 </RadioGroup>
-              </fieldset>
+              </ConfigGroup>
 
-              {/* Type Case */}
-              <fieldset className="rounded-lg border border-border/60 bg-muted/30 px-5 py-4">
-                <legend className="sr-only">类型大小写</legend>
-                <p className="text-sm font-semibold text-foreground">
-                  类型大小写
-                </p>
-                <p className="mb-3 mt-0.5 text-xs text-muted-foreground">
-                  请选择类型的显示格式
-                </p>
+              <ConfigGroup title="类型大小写" hint="控制字段类型显示格式">
                 <RadioGroup
                   value={typeCase}
                   onValueChange={(v) => setTypeCase(v as TypeCaseMode)}
-                  className="flex items-center gap-5"
+                  className="flex flex-wrap items-center gap-x-5 gap-y-2"
                 >
                   {sqlToTableTypeCaseOptions.map((opt) => (
                     <div
@@ -733,18 +1078,14 @@ export function SqlToTableWorkspace({
                     </div>
                   ))}
                 </RadioGroup>
-              </fieldset>
+              </ConfigGroup>
 
-              {/* Columns */}
-              <fieldset className="rounded-lg border border-border/60 bg-muted/30 px-5 py-4 sm:col-span-2 lg:col-span-1">
-                <legend className="sr-only">选择导出列</legend>
-                <p className="text-sm font-semibold text-foreground">
-                  选择导出列
-                </p>
-                <p className="mb-3 mt-0.5 text-xs text-muted-foreground">
-                  请选择需要导出的表格列
-                </p>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 sm:grid-cols-4 lg:grid-cols-2">
+              <ConfigGroup
+                title="选择导出列"
+                hint="勾选需要导出的字段"
+                className="min-w-[280px] flex-1"
+              >
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
                   {sqlToTableColumnOptions.map((opt) => (
                     <div
                       key={opt.value}
@@ -764,7 +1105,61 @@ export function SqlToTableWorkspace({
                     </div>
                   ))}
                 </div>
-              </fieldset>
+              </ConfigGroup>
+
+              <ConfigGroup
+                title="论文格式模板"
+                hint="模板参数会同时作用于预览和导出"
+                className="min-w-[280px] flex-1"
+              >
+                <RadioGroup
+                  value={paperStyle}
+                  onValueChange={(v) =>
+                    setPaperStyle(v as SqlToTablePaperTemplateId)
+                  }
+                  className="flex flex-wrap items-center gap-x-5 gap-y-2.5"
+                >
+                  {sqlToTablePaperStyleOptions.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className="flex items-center gap-2"
+                    >
+                      <RadioGroupItem
+                        value={opt.value}
+                        id={`paper-style-${opt.value}`}
+                        className="border-input"
+                      />
+                      <label
+                        htmlFor={`paper-style-${opt.value}`}
+                        className="cursor-pointer text-sm leading-none"
+                      >
+                        {opt.label}
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          ({opt.description})
+                        </span>
+                      </label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </ConfigGroup>
+
+              <ConfigGroup
+                title="导出排版"
+                hint="方向与单元格对齐策略"
+                className="min-w-[280px] flex-1"
+              >
+                <WordExportConfigPanel
+                  orientationMode={orientationMode}
+                  onOrientationChange={setOrientationMode}
+                  alignmentMode={alignmentMode}
+                  onAlignmentChange={setAlignmentMode}
+                  idPrefix="sql"
+                  orientationShowTitle={false}
+                  orientationInlineDescription
+                  alignmentInlineDescription
+                  className="!space-y-3 !border-0 !bg-transparent !p-0"
+                />
+              </ConfigGroup>
             </div>
 
             {/* Buttons */}
@@ -778,7 +1173,7 @@ export function SqlToTableWorkspace({
                     })
                   }
                   disabled={loading === "generate"}
-                  className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="tools-word-button-transition inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading === "generate" ? (
                     <Loader2 className="mr-2 size-4 animate-spin" />
@@ -792,7 +1187,7 @@ export function SqlToTableWorkspace({
                 type="button"
                 onClick={handleExport}
                 disabled={loading === "export"}
-                className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="tools-word-button-transition inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading === "export" ? (
                   <Loader2 className="mr-2 size-4 animate-spin" />
@@ -803,41 +1198,21 @@ export function SqlToTableWorkspace({
               </button>
             </div>
 
-            {/* Feedback */}
-            {notice.tone !== "info" && (
-              <p
-                role="status"
-                aria-live="polite"
-                className={cn(
-                  "text-center text-xs",
-                  notice.tone === "error"
-                    ? "text-destructive"
-                    : "text-emerald-700"
-                )}
-              >
-                {notice.text}
-              </p>
-            )}
+            <ToolConfigSummary items={sqlToTableConfigSummary} />
+            <ToolNoticeSlot tone={notice.tone} text={notice.text} />
 
-            <p className="flex items-center justify-center gap-1 text-center text-xs text-muted-foreground/80">
-              <AlertCircle className="size-3.5" />
-              <span>
-                此功能涉及到AI生成内容，不代表本站立场，使用前请仔细判别。
-              </span>
-            </p>
+            {workspaceModules.aiDisclaimer ? <ToolAiGeneratedDisclaimer /> : null}
           </div>
         </section>
 
         {/* ─────────────── PREVIEW SECTION ──────────────── */}
-        <section className="space-y-6">
-          <div>
-            <h2 className="mb-2 text-2xl font-semibold text-foreground">
-              效果展示
-            </h2>
-            <p className="mb-2 text-sm text-muted-foreground">
-              查看SQL转三线表和普通表格工具的导出效果
-            </p>
-          </div>
+        <section className={toolsWorkspaceLayout.surfaceSection}>
+          {workspaceModules.sectionHeading ? (
+            <ToolSectionHeading
+              title="效果展示"
+              description="查看SQL转三线表和普通表格工具的导出效果"
+            />
+          ) : null}
 
           {/* Table switcher */}
           {previewTables.length > 1 && (
@@ -848,125 +1223,143 @@ export function SqlToTableWorkspace({
                   type="button"
                   onClick={() => setActiveTableId(t.id)}
                   className={cn(
-                    "cursor-pointer rounded-md border px-3 py-1 text-xs transition-colors duration-150",
+                    "tools-word-button-transition cursor-pointer rounded-md border px-3 py-1 text-xs transition-colors duration-150",
                     activeTable?.id === t.id
                       ? "border-primary/40 bg-primary/10 text-primary"
                       : "border-border bg-card text-muted-foreground hover:border-primary/35 hover:text-foreground"
                   )}
                 >
-                  {t.displayName}
+                  {t.displayName} · {t.columns.length}字段
                 </button>
               ))}
             </div>
           )}
-
-          {activeTable ? (
-            <div className="grid gap-6 md:grid-cols-2">
-              <PreviewCard
-                table={activeTable}
-                tableIndex={activeTableIndex}
-                typeCase={typeCase}
-                columns={visibleColumns}
-                format="normal"
-                label="普通表格"
-              />
-              <PreviewCard
-                table={activeTable}
-                tableIndex={activeTableIndex}
-                typeCase={typeCase}
-                columns={visibleColumns}
-                format="three-line"
-                label="三线表"
-              />
-            </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              {["普通表格预览区", "三线表预览区"].map((text) => (
-                <div
-                  key={text}
-                  className="flex aspect-video items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted"
-                >
-                  <p className="text-sm text-muted-foreground">{text}</p>
-                </div>
-              ))}
-            </div>
+          {activeTable && (
+            <p className="text-xs text-muted-foreground">
+              当前表：{activeTable.displayName}，共 {activeTable.columns.length} 个字段，当前导出 {visibleColumns.length} 列。
+            </p>
           )}
+
+          <div
+            className="relative overflow-hidden transition-[height] duration-300 ease-out"
+            style={
+              previewStageHeight
+                ? { height: `${previewStageHeight}px` }
+                : undefined
+            }
+          >
+            {activeTable ? (
+              <div
+                ref={previewContentRef}
+                key={`preview-${activeTable.id}-${paperStyle}-${typeCase}-${alignmentMode}-${visibleColumns.join(",")}`}
+                className="grid gap-6 duration-300 ease-out animate-in fade-in-0 slide-in-from-bottom-1 md:grid-cols-2"
+              >
+                <PreviewCard
+                  table={activeTable}
+                  tableIndex={activeTableIndex}
+                  typeCase={typeCase}
+                  columns={visibleColumns}
+                  format="normal"
+                  label={previewLabelByFormat.normal}
+                  paperStyleId={paperStyle}
+                  alignmentMode={alignmentMode}
+                  selected={format === "normal"}
+                />
+                <PreviewCard
+                  table={activeTable}
+                  tableIndex={activeTableIndex}
+                  typeCase={typeCase}
+                  columns={visibleColumns}
+                  format="three-line"
+                  label={previewLabelByFormat["three-line"]}
+                  paperStyleId={paperStyle}
+                  alignmentMode={alignmentMode}
+                  selected={format === "three-line"}
+                />
+              </div>
+            ) : (
+              <div
+                ref={previewContentRef}
+                key="preview-empty"
+                className="grid gap-6 duration-300 ease-out animate-in fade-in-0 slide-in-from-bottom-1 md:grid-cols-2"
+              >
+                {["普通表格预览区", "三线表预览区"].map((text) => (
+                  <div
+                    key={text}
+                    className="tools-preview-shell flex aspect-video items-center justify-center rounded-lg"
+                  >
+                    <p className="text-sm text-muted-foreground">{text}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </section>
 
         {/* ─────────────── FOOTER SEO ──────────────── */}
-        <footer className="-mx-5 mt-12 border-t border-border bg-gray-50/80 px-5 py-12 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12">
-          <div className="space-y-12">
-            <section className="space-y-4">
-              <h2 className="text-2xl font-semibold text-foreground">
+        <footer className={toolsWorkspaceLayout.footer}>
+          <ToolCollapsibleFooter contentClassName={toolsWorkspaceLayout.footerContent}>
+            <section className={toolsWorkspaceLayout.footerSection}>
+              <h2 className={toolsWorkspaceLayout.footerTitle}>
                 在线SQL三线表导出工具 - 专业的数据库表结构文档生成工具
               </h2>
-              <p className="leading-relaxed text-muted-foreground">
+              <p className={toolsWorkspaceLayout.footerBody}>
                 {sqlToTableSeoParagraph}
               </p>
             </section>
 
-            <section className="space-y-4">
-              <h2 className="text-2xl font-semibold text-foreground">
+            <section className={toolsWorkspaceLayout.footerSection}>
+              <h2 className={toolsWorkspaceLayout.footerTitle}>
                 如何使用SQL三线表导出工具？
               </h2>
-              <ol className="list-inside list-decimal space-y-3 leading-relaxed text-muted-foreground">
+              <ol className={toolsWorkspaceLayout.footerList}>
                 {sqlToTableGuideSteps.map((step) => (
                   <li key={step}>{step}</li>
                 ))}
               </ol>
             </section>
 
-            <section className="space-y-6">
-              <h2 className="text-2xl font-semibold text-foreground">
-                常见问题
-              </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <FaqItem
-                  question="什么是三线表？为什么要使用三线表？"
-                  answer="三线表是学术论文和技术文档中标准的表格格式，只保留顶线、底线和标题栏下横线三条线，去除竖线和其他横线。三线表简洁美观、符合国家标准（GB/T 7714），是计算机毕业设计、学术期刊论文的必备格式。"
-                />
-                <FaqItem
-                  question="支持哪些SQL语法？"
-                  answer="支持MySQL、PostgreSQL、SQLite等主流数据库的CREATE TABLE语法。工具会自动解析表名、字段名、数据类型、长度、主键约束、注释等信息，并转换为Word表格。支持单表和多表批量导出。"
-                />
-                <FaqItem
-                  question="如何自定义导出的列？"
-                  answer='在"选择导出列"区域可以勾选需要显示的列，包括序号、字段名称、类型、长度、主键、备注等选项。默认全选，你可以根据文档需求自由组合。还可以选择数据类型是大写还是小写显示。'
-                />
-                <FaqItem
-                  question="普通表格和三线表有什么区别？"
-                  answer="普通表格保留所有边框线，适合日常工作文档。三线表只保留顶线、底线和标题栏下横线，更加简洁规范，符合学术论文和正式技术文档的要求。可以在导出时灵活切换。"
-                />
-                <div className="space-y-2 md:col-span-2">
-                  <FaqItem
-                    question="适合哪些使用场景？"
-                    answer="广泛应用于计算机毕业设计论文（数据库设计章节）、软件系统设计文档、数据库技术方案、项目开发文档、系统说明书、需求规格说明书等需要展示数据库表结构的场景。特别适合需要规范三线表格式的学术论文。"
+            {workspaceModules.faqItem ? (
+              <section className={toolsWorkspaceLayout.footerSection}>
+                <h2 className={toolsWorkspaceLayout.footerTitle}>
+                  常见问题
+                </h2>
+                <div className={toolsWorkspaceLayout.footerFaqGrid}>
+                  <ToolFaqItem
+                    question="什么是三线表？为什么要使用三线表？"
+                    answer="三线表是学术论文和技术文档中标准的表格格式，只保留顶线、底线和标题栏下横线三条线，去除竖线和其他横线。三线表简洁美观、符合国家标准（GB/T 7714），是计算机毕业设计、学术期刊论文的必备格式。"
                   />
+                  <ToolFaqItem
+                    question="支持哪些SQL语法？"
+                    answer="支持MySQL、PostgreSQL、SQLite等主流数据库的CREATE TABLE语法。工具会自动解析表名、字段名、数据类型、长度、主键约束、注释等信息，并转换为Word表格。支持单表和多表批量导出。"
+                  />
+                  <ToolFaqItem
+                    question="如何自定义导出的列？"
+                    answer='在"选择导出列"区域可以勾选需要显示的列，包括序号、字段名称、类型、长度、主键、备注等选项。默认全选，你可以根据文档需求自由组合。还可以选择数据类型是大写还是小写显示。'
+                  />
+                  <ToolFaqItem
+                    question="普通表格和三线表有什么区别？"
+                    answer="普通表格保留所有边框线，适合日常工作文档。三线表只保留顶线、底线和标题栏下横线，更加简洁规范，符合学术论文和正式技术文档的要求。可以在导出时灵活切换。"
+                  />
+                  <div className="space-y-2 md:col-span-2">
+                    <ToolFaqItem
+                      question="适合哪些使用场景？"
+                      answer="广泛应用于计算机毕业设计论文（数据库设计章节）、软件系统设计文档、数据库技术方案、项目开发文档、系统说明书、需求规格说明书等需要展示数据库表结构的场景。特别适合需要规范三线表格式的学术论文。"
+                    />
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            ) : null}
 
             <section className="border-t border-border pt-6">
-              <p className="text-sm text-muted-foreground">
+              <p className={toolsWorkspaceLayout.footerKeywords}>
                 {sqlToTableKeywordList.join("、")}
               </p>
             </section>
-          </div>
+          </ToolCollapsibleFooter>
         </footer>
       </div>
-    </div>
-  )
-}
-
-/* ================================================================== */
-/*  Subcomponents                                                      */
-/* ================================================================== */
-
-function FaqItem({ question, answer }: { question: string; answer: string }) {
-  return (
-    <div className="space-y-2">
-      <h3 className="text-lg font-medium text-foreground">{question}</h3>
-      <p className="text-sm leading-relaxed text-muted-foreground">{answer}</p>
     </div>
   )
 }

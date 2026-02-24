@@ -1,6 +1,7 @@
 import localFont from "next/font/local"
 import type { Metadata, Viewport } from "next"
 
+import "katex/dist/katex.min.css"
 import "@/styles/globals.css"
 import { siteConfig } from "@/config/site"
 import { absoluteUrl, cn } from "@/lib/utils"

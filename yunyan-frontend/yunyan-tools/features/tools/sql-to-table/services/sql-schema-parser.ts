@@ -232,7 +232,7 @@ function parseColumnDefinition(definition: string): SqlTableColumn | null {
   }
 
   return {
-    id: `${columnName}-${Math.random().toString(36).slice(2, 8)}`,
+    id: columnName,
     name: columnName,
     type: baseType,
     length,
@@ -348,20 +348,27 @@ function parseNarrativeTables(input: string) {
 export function parseSqlSchemaToTables(sqlInput: string): SqlTableSchema[] {
   const normalizedInput = sqlInput.replace(/\r\n/g, "\n")
   const tables: SqlTableSchema[] = []
+  const createTablePattern = /create\s+table/i
 
   let cursor = 0
   while (cursor < normalizedInput.length) {
-    const createMatch = /create\s+table/i.exec(normalizedInput.slice(cursor))
+    const createMatch = createTablePattern.exec(normalizedInput.slice(cursor))
     if (!createMatch) break
 
     const statementStart = cursor + (createMatch.index || 0)
     const openIdx = normalizedInput.indexOf("(", statementStart)
-    if (openIdx < 0) break
+    if (openIdx < 0) {
+      cursor = statementStart + "create table".length
+      continue
+    }
 
     const header = normalizedInput.slice(statementStart, openIdx)
     const tableName = parseTableNameFromHeader(header)
     const closeIdx = findMatchingBracket(normalizedInput, openIdx)
-    if (closeIdx < 0) break
+    if (closeIdx < 0) {
+      cursor = openIdx + 1
+      continue
+    }
 
     const body = normalizedInput.slice(openIdx + 1, closeIdx)
     const semiIdx = normalizedInput.indexOf(";", closeIdx)
@@ -381,7 +388,10 @@ export function parseSqlSchemaToTables(sqlInput: string): SqlTableSchema[] {
       }
 
       const col = parseColumnDefinition(def)
-      if (col) columns.push(col)
+      if (col) {
+        col.id = `${tableName}-${col.name}-${columns.length + 1}`
+        columns.push(col)
+      }
     }
 
     // Apply table-level PRIMARY KEY to matching columns

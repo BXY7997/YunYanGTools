@@ -1,9 +1,17 @@
 import type {
   ExportColumnKey,
   ExportTableFormat,
+  SqlToTablePaperTemplateId,
   SqlToTableMode,
   TypeCaseMode,
 } from "@/features/tools/sql-to-table/types/sql-to-table"
+import {
+  sqlToTableDefaultPaperTemplateId,
+  sqlToTablePaperTemplateOptions,
+  sqlToTablePaperTemplateSpecs,
+  type SqlToTablePaperTemplateOption,
+  type SqlToTablePaperTemplateSpec,
+} from "@/features/tools/sql-to-table/constants/sql-to-table-paper-template"
 
 export interface SqlToTablePreset {
   id: string
@@ -16,6 +24,8 @@ export interface OptionItem<TValue extends string> {
   value: TValue
   label: string
 }
+
+export type SqlToTablePaperTemplateItem = SqlToTablePaperTemplateOption
 
 export const sqlToTableModeTabs: OptionItem<SqlToTableMode>[] = [
   { value: "sql", label: "SQL生成" },
@@ -120,6 +130,8 @@ export const sqlToTableTypeCaseOptions: OptionItem<TypeCaseMode>[] = [
   { value: "lower", label: "小写" },
 ]
 
+export const sqlToTablePaperStyleOptions = sqlToTablePaperTemplateOptions
+
 export const sqlToTableColumnOptions: OptionItem<ExportColumnKey>[] = [
   { value: "index", label: "序号" },
   { value: "name", label: "字段名称" },
@@ -145,6 +157,14 @@ export const sqlToTableDefaultPresetId = sqlToTablePresets[0]?.id || ""
 export const sqlToTableDefaultFormat: ExportTableFormat = "three-line"
 
 export const sqlToTableDefaultTypeCase: TypeCaseMode = "upper"
+
+export const sqlToTableDefaultPaperStyle: SqlToTablePaperTemplateId =
+  sqlToTableDefaultPaperTemplateId
+
+export const sqlToTablePaperStyleSpecs: Record<
+  SqlToTablePaperTemplateId,
+  SqlToTablePaperTemplateSpec
+> = sqlToTablePaperTemplateSpecs
 
 export const sqlToTableDefaultColumns: ExportColumnKey[] = [
   "index",
