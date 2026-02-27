@@ -22,8 +22,13 @@
     },
     {
       "name": "preset-wired-workspace",
-      "file": "features/tools/sql-to-table/components/sql-to-table-workspace.tsx",
+      "file": "features/tools/sql-to-table/components/workspace/use-sql-to-table-workspace-state.ts",
       "tokens": ["resolveToolWordExportPresetId", "presetId: exportPresetId"]
+    },
+    {
+      "name": "structured-word-guard",
+      "file": "features/tools/pseudo-code/services/pseudo-code-word-export.ts",
+      "tokens": ["assertWordExportStructuredPolicy", "<colgroup>", "word-break:break-word"]
     }
   ]
 }

@@ -80,17 +80,25 @@ const InspectorFieldControl = React.memo(function InspectorFieldControl({
   onValueChange,
 }: InspectorFieldControlProps) {
   const inputId = `inspector-${field.id}`
+  const isCompact = Boolean(field.compact)
+  const controlHeightClassName = isCompact ? "h-8" : "h-10"
+  const controlTextClassName = isCompact ? "text-xs" : "text-sm"
+  const fieldGapClassName = isCompact ? "gap-1" : "gap-1.5"
 
   if (field.type === "select") {
     return (
       <label
-        className="grid gap-1.5 text-xs text-muted-foreground"
+        className={cn("grid text-xs text-muted-foreground", fieldGapClassName)}
         htmlFor={inputId}
       >
         <span>{field.label}</span>
         <select
           id={inputId}
-          className="h-10 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none transition-colors focus:border-ring"
+          className={cn(
+            controlHeightClassName,
+            controlTextClassName,
+            "w-full min-w-0 max-w-full rounded-md border border-border bg-background px-2 text-foreground outline-none transition-colors focus:border-ring"
+          )}
           value={String(value)}
           onChange={(event) => onValueChange(field.id, event.target.value)}
         >
@@ -107,7 +115,10 @@ const InspectorFieldControl = React.memo(function InspectorFieldControl({
   if (field.type === "switch") {
     return (
       <label
-        className="flex items-center justify-between rounded-md border border-border p-2 text-xs text-muted-foreground"
+        className={cn(
+          "flex items-center justify-between rounded-md border border-border text-xs text-muted-foreground",
+          isCompact ? "p-1.5" : "p-2"
+        )}
         htmlFor={inputId}
       >
         <span>{field.label}</span>
@@ -125,7 +136,7 @@ const InspectorFieldControl = React.memo(function InspectorFieldControl({
   if (field.type === "range") {
     return (
       <label
-        className="grid gap-1.5 text-xs text-muted-foreground"
+        className={cn("grid text-xs text-muted-foreground", fieldGapClassName)}
         htmlFor={inputId}
       >
         <span className="flex items-center justify-between">
@@ -144,7 +155,7 @@ const InspectorFieldControl = React.memo(function InspectorFieldControl({
           onChange={(event) =>
             onValueChange(field.id, Number(event.target.value))
           }
-          className="h-5 cursor-pointer accent-primary"
+          className={cn(isCompact ? "h-4" : "h-5", "cursor-pointer accent-primary")}
         />
       </label>
     )
@@ -153,7 +164,7 @@ const InspectorFieldControl = React.memo(function InspectorFieldControl({
   if (field.type === "color") {
     return (
       <label
-        className="grid gap-1.5 text-xs text-muted-foreground"
+        className={cn("grid text-xs text-muted-foreground", fieldGapClassName)}
         htmlFor={inputId}
       >
         <span>{field.label}</span>
@@ -163,13 +174,20 @@ const InspectorFieldControl = React.memo(function InspectorFieldControl({
             type="color"
             value={String(value)}
             onChange={(event) => onValueChange(field.id, event.target.value)}
-            className="h-10 w-12 cursor-pointer rounded border border-border bg-background p-1"
+            className={cn(
+              controlHeightClassName,
+              "w-12 cursor-pointer rounded border border-border bg-background p-1"
+            )}
           />
           <input
             type="text"
             value={String(value)}
             onChange={(event) => onValueChange(field.id, event.target.value)}
-            className="h-10 flex-1 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none transition-colors focus:border-ring"
+            className={cn(
+              controlHeightClassName,
+              controlTextClassName,
+              "min-w-0 flex-1 rounded-md border border-border bg-background px-2 text-foreground outline-none transition-colors focus:border-ring"
+            )}
           />
         </div>
       </label>
@@ -178,7 +196,7 @@ const InspectorFieldControl = React.memo(function InspectorFieldControl({
 
   return (
     <label
-      className="grid gap-1.5 text-xs text-muted-foreground"
+      className={cn("grid text-xs text-muted-foreground", fieldGapClassName)}
       htmlFor={inputId}
     >
       <span>{field.label}</span>
@@ -198,7 +216,11 @@ const InspectorFieldControl = React.memo(function InspectorFieldControl({
               : event.target.value
           )
         }
-        className="h-10 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none transition-colors focus:border-ring"
+        className={cn(
+          controlHeightClassName,
+          controlTextClassName,
+          "w-full min-w-0 max-w-full rounded-md border border-border bg-background px-2 text-foreground outline-none transition-colors focus:border-ring"
+        )}
       />
     </label>
   )

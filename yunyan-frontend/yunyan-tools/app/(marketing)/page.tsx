@@ -5,35 +5,13 @@ import { siteConfig } from "@/config/site"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
-async function getGitHubStars(): Promise<string | null> {
-  try {
-    const response = await fetch(
-      "https://api.github.com/repos/shadcn/taxonomy",
-      {
-        headers: {
-          Accept: "application/vnd.github+json",
-          Authorization: `Bearer ${env.GITHUB_ACCESS_TOKEN}`,
-        },
-        next: {
-          revalidate: 60,
-        },
-      }
-    )
-
-    if (!response?.ok) {
-      return null
-    }
-
-    const json = await response.json()
-
-    return parseInt(json["stargazers_count"]).toLocaleString()
-  } catch (error) {
-    return null
-  }
+function getGitHubStars(): string | null {
+  const stars = env.NEXT_PUBLIC_MARKETING_GITHUB_STARS?.trim()
+  return stars?.length ? stars : null
 }
 
-export default async function IndexPage() {
-  const stars = await getGitHubStars()
+export default function IndexPage() {
+  const stars = getGitHubStars()
 
   return (
     <>

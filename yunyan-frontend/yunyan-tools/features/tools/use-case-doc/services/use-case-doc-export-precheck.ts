@@ -5,6 +5,7 @@ import type {
   WordPageOrientationMode,
 } from "@/features/tools/shared/types/word-export"
 import { defaultWordExportPresetId } from "@/features/tools/shared/constants/word-export-presets"
+import { wordExportAcademicNoticeCopy } from "@/features/tools/shared/constants/word-export-standard"
 
 function getLongestFlowLength(flow: string[]) {
   return flow.reduce((max, item) => Math.max(max, item.length), 0)
@@ -32,12 +33,13 @@ export function getUseCaseDocExportPrecheckNotices(
     notices.push("用例说明表通常建议纵向页面，当前已手动设置为横向。")
   }
 
+  // 论文排版建议：正文优先按语义对齐而非全部居中。
   if (alignmentMode === "all-center") {
-    notices.push("当前已启用全部居中；如需更符合论文习惯，建议使用论文标准对齐。")
+    notices.push(wordExportAcademicNoticeCopy.allCenter)
   }
 
   if (presetId !== "thesis-standard") {
-    notices.push("当前导出预设非论文标准，若用于学术提交建议切换论文标准预设。")
+    notices.push(wordExportAcademicNoticeCopy.nonThesisPreset)
   }
 
   return notices

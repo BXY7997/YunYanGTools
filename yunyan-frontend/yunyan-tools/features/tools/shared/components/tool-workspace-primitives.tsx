@@ -41,14 +41,16 @@ export function ToolNoticeSlot({
 
 export function ToolConfigSummary({
   title = "当前生效配置",
-  items,
+  items = [],
   className,
 }: {
   title?: string
-  items: ToolConfigSummaryItem[]
+  items?: ToolConfigSummaryItem[]
   className?: string
 }) {
-  if (items.length === 0) {
+  const safeItems = Array.isArray(items) ? items : []
+
+  if (safeItems.length === 0) {
     return null
   }
 
@@ -63,7 +65,7 @@ export function ToolConfigSummary({
         {title}
       </p>
       <div className="mt-2 flex flex-wrap items-center gap-2">
-        {items.map((item) => (
+        {safeItems.map((item) => (
           <span
             key={item.key}
             className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-card px-2.5 py-1 text-xs text-muted-foreground"

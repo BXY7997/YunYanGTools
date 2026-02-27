@@ -51,6 +51,24 @@ module.exports = {
       ],
     },
     {
+      scope: "export-standard-const",
+      file: "features/tools/shared/constants/word-export-standard.ts",
+      tokens: [
+        "wordExportStandardProfile",
+        "wordExportAcademicNoticeCopy",
+        "getWordExportAcademicNotices",
+      ],
+    },
+    {
+      scope: "export-standard-guard",
+      file: "features/tools/shared/services/word-export-standard-guard.ts",
+      tokens: [
+        "assertWordExportStructuredPolicy",
+        "structuredTableTokens",
+        "imageBasedTokens",
+      ],
+    },
+    {
       scope: "draft-schema-const",
       file: "features/tools/shared/constants/draft-schema.ts",
       tokens: ["toolDraftSchemaVersions", "useCaseDoc", "sqlToTable"],
@@ -84,7 +102,7 @@ module.exports = {
       id: "use-case-doc",
       typeFile: "features/tools/use-case-doc/types/use-case-doc.ts",
       workspaceFile:
-        "features/tools/use-case-doc/components/use-case-doc-workspace.tsx",
+        "features/tools/use-case-doc/components/workspace/use-case-doc-workspace.tsx",
       exportFile:
         "features/tools/use-case-doc/services/use-case-doc-word-export.ts",
       precheckFile:
@@ -103,6 +121,7 @@ module.exports = {
         "payload.alignmentMode || preset.defaultAlignmentMode",
         'options.alignmentMode === "all-center" ? "center" : "left"',
         'options.alignmentMode === "all-center" ? "middle" : "top"',
+        "assertWordExportStructuredPolicy",
       ],
       precheckTokens: [
         'if (alignmentMode === "all-center")',
@@ -112,7 +131,8 @@ module.exports = {
     {
       id: "test-doc",
       typeFile: "features/tools/test-doc/types/test-doc.ts",
-      workspaceFile: "features/tools/test-doc/components/test-doc-workspace.tsx",
+      workspaceFile:
+        "features/tools/test-doc/components/workspace/test-doc-workspace.tsx",
       exportFile: "features/tools/test-doc/services/test-doc-word-export.ts",
       precheckFile: "features/tools/test-doc/services/test-doc-export-precheck.ts",
       workspaceTokens: [
@@ -129,6 +149,7 @@ module.exports = {
         "payload.alignmentMode || preset.defaultAlignmentMode",
         'options.alignmentMode === "all-center" ? "center" : "left"',
         'options.alignmentMode === "all-center" ? "middle" : "top"',
+        "assertWordExportStructuredPolicy",
       ],
       precheckTokens: [
         'if (alignmentMode === "all-center")',
@@ -138,8 +159,11 @@ module.exports = {
     {
       id: "sql-to-table",
       typeFile: "features/tools/sql-to-table/types/sql-to-table.ts",
-      workspaceFile:
-        "features/tools/sql-to-table/components/sql-to-table-workspace.tsx",
+      workspaceFiles: [
+        "features/tools/sql-to-table/components/workspace/use-sql-to-table-workspace-state.ts",
+        "features/tools/sql-to-table/components/workspace/sections/sql-to-table-editor-section.tsx",
+        "features/tools/sql-to-table/components/workspace/sections/sql-to-table-preview-card.tsx",
+      ],
       exportFile:
         "features/tools/sql-to-table/services/sql-to-table-word-export.ts",
       precheckFile:
@@ -160,6 +184,7 @@ module.exports = {
         "payload.alignmentMode || preset.defaultAlignmentMode",
         "resolveSqlToTableColumnLayout",
         "alignmentMode || \"standard\"",
+        "assertWordExportStructuredPolicy",
       ],
       precheckTokens: [
         'if (alignmentMode === "all-center")',
@@ -170,7 +195,7 @@ module.exports = {
       id: "word-table",
       typeFile: "features/tools/word-table/types/word-table.ts",
       workspaceFile:
-        "features/tools/word-table/components/word-table-workspace.tsx",
+        "features/tools/word-table/components/workspace/word-table-workspace.tsx",
       exportFile:
         "features/tools/word-table/services/word-table-word-export.ts",
       precheckFile:
@@ -189,6 +214,7 @@ module.exports = {
         "payload.alignmentMode || preset.defaultAlignmentMode",
         'const bodyTextAlign = alignmentMode === "all-center" ? "center" : "left"',
         'const bodyVerticalAlign = alignmentMode === "all-center" ? "middle" : "top"',
+        "assertWordExportStructuredPolicy",
       ],
       precheckTokens: [
         'if (alignmentMode === "all-center")',
@@ -199,7 +225,7 @@ module.exports = {
       id: "pseudo-code",
       typeFile: "features/tools/pseudo-code/types/pseudo-code.ts",
       workspaceFile:
-        "features/tools/pseudo-code/components/pseudo-code-workspace.tsx",
+        "features/tools/pseudo-code/components/workspace/pseudo-code-workspace.tsx",
       exportFile:
         "features/tools/pseudo-code/services/pseudo-code-word-export.ts",
       precheckFile:
@@ -215,6 +241,7 @@ module.exports = {
         "font-family:'Consolas','Courier New',monospace",
         "border-top:${styleSpec.topRulePt}pt solid #000",
         "assertWordExportHtml",
+        "assertWordExportStructuredPolicy",
       ],
       precheckTokens: [
         "论文提交",

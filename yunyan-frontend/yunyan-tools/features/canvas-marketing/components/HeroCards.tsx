@@ -11,6 +11,7 @@ import {
 } from "@canvas/components/ui/card";
 import { Check, Github } from "lucide-react";
 import { LightBulbIcon } from "./Icons";
+import { marketingAvatarAssets } from "../lib/local-assets";
 
 export const HeroCards = () => {
   return (
@@ -21,7 +22,7 @@ export const HeroCards = () => {
           <Avatar>
             <AvatarImage
               alt=""
-              src="https://github.com/shadcn.png"
+              src={marketingAvatarAssets.heroPrimary}
             />
             <AvatarFallback>陈</AvatarFallback>
           </Avatar>
@@ -39,7 +40,7 @@ export const HeroCards = () => {
       <Card className="absolute right-[20px] top-4 w-80 flex flex-col justify-center items-center drop-shadow-xl shadow-black/10 dark:shadow-white/10">
         <CardHeader className="mt-8 flex justify-center items-center pb-2">
           <img
-            src="https://i.pravatar.cc/150?img=58"
+            src={marketingAvatarAssets.heroFounder}
             alt="user avatar"
             className="absolute grayscale-[0%] -top-12 rounded-full w-24 h-24 aspect-square object-cover"
           />

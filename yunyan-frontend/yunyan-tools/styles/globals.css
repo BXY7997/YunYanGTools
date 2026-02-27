@@ -163,6 +163,44 @@
     background: var(--tools-preview-shell-bg, #f8fafc);
   }
 
+  .tools-right-grid-pane {
+    position: relative;
+    overflow: clip;
+    min-height: 100%;
+    background-color: hsl(var(--background) / 0.52);
+    border: 1px solid hsl(var(--border) / 0.55);
+    box-shadow: inset 0 1px 0 hsl(var(--background) / 0.72);
+  }
+
+  .tools-workspace-stage {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .tools-workspace-stage > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (min-width: 768px) {
+    .tools-workspace-right-grid::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      left: 50%;
+      z-index: 0;
+      pointer-events: none;
+      background-image: linear-gradient(
+          to right,
+          hsl(var(--border) / 0.2) 1px,
+          transparent 1px
+        ),
+        linear-gradient(to bottom, hsl(var(--border) / 0.2) 1px, transparent 1px);
+      background-size: 18px 18px, 18px 18px;
+      opacity: 0.72;
+    }
+  }
+
   .tools-word-banner {
     border: 1px solid var(--tools-word-banner-border);
     background-image: linear-gradient(

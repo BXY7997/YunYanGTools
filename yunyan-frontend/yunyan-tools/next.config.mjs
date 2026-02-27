@@ -18,11 +18,13 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  images: {
-    domains: ["avatars.githubusercontent.com"],
-  },
   serverExternalPackages: ["@prisma/client"],
-  webpack: (config) => {
+  webpack: (config, { dev, isServer }) => {
+    if (dev && !isServer) {
+      // Avoid runtime `eval` parsing issues in browser dev chunks (e.g. app/layout.js).
+      config.devtool = "cheap-module-source-map"
+    }
+
     if (!hasEmotionIsPropValid) {
       config.resolve ??= {}
       config.resolve.alias = {

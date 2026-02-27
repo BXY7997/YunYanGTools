@@ -5,6 +5,7 @@
 - 保持 `app/(tools)` 路由壳层稳定，仅在 `features/tools/*` 扩展业务。
 - 统一新模块目录结构，降低多人并行开发与后端接入成本。
 - 复用共享能力（配色、提示文案、导出引擎、草稿、埋点、回归守护）。
+- 所有工具页根容器统一走 `ToolWorkspaceShell`，避免重复样式壳层。
 
 ## 分层结构
 
@@ -13,7 +14,8 @@ app/(tools)/*                            # 路由装配层（只做页面入口�
 features/tools/
 ├─ shared/                               # 共享组件、常量、hooks、services
 └─ <tool-id>/                            # 工具模块边界
-   ├─ components/                        # 工作区 UI
+   ├─ components/                        # 入口薄封装（仅 re-export/装配）
+   │  └─ workspace/                      # 工作区实现层（sections/hooks/actions）
    ├─ constants/                         # 模块配置与文案
    ├─ services/                          # API/导出/预检查/纯函数
    ├─ types/                             # 模块域类型
@@ -25,8 +27,8 @@ features/tools/
 
 1. 生成模块骨架：`pnpm tools:module -- <tool-id> --title "<工具标题>"`
 2. 在 `config/tools-registry.ts` 增加 `id/route/workspaceType`。
-3. 在 `app/(tools)/apps/[tool]/page.tsx` 接入新 `Workspace` 组件分支。
-4. 补全 `services/*-api.ts` 的远程协议解析与错误码映射。
+3. 在 `app/(tools)/apps/[tool]/page.tsx` 的 `specializedFormWorkspaceByToolId` 注册新 `Workspace` 组件。
+4. 补全 `services/*-contract.ts`（远程协议 schema + payload 解析）与 `services/*-api.ts`（业务动作）。
 5. 如模块包含 Word 导出服务（`services/*-word-export.ts`），更新 `scripts/word-export-regression.config.js` 加守护规则。
 6. 使用 `pnpm tools:module` 命令输出的建议片段，快速补齐回归配置字段和路径。
 7. 按 [tool-runtime-contract.md](/home/ubt/CodeSp/Enterprise/YunYanGTools/yunyan-frontend/yunyan-tools/docs/standards/tool-runtime-contract.md) 提供模块 runtime 合约。
@@ -46,6 +48,10 @@ features/tools/
 ## CI 规范
 
 - `tools:word-regression` 必须在 PR 中自动执行。
-- `tools:word-fixtures` 与 `tools:module-admission` 必须在 PR 中自动执行。
+- `tools:word-fixtures`、`tools:module-admission` 与 `tools:workspace-guard` 必须在 PR 中自动执行。
 - 涉及导出模板或排版算法调整时，必须同步更新回归脚本的关键 token。
 - 新模块上线前必须通过 [tool-module-admission-checklist.md](/home/ubt/CodeSp/Enterprise/YunYanGTools/yunyan-frontend/yunyan-tools/docs/standards/tool-module-admission-checklist.md)。
+- `tools:module-admission` 会校验工作区是否使用共享 `ToolWorkspaceShell`，禁止重复复制旧壳层类名。
+- `tools:module-admission` 会校验入口文件是否指向 `components/workspace/*-workspace.tsx`，避免再次出现巨型入口文件。
+- `tools:module-admission` 会校验模块是否已注册到 runtime registry 与 backend manifest。
+- `tools:workspace-guard` 会校验复杂模块是否完成 `sections/hooks/actions` 拆分并提供目录级 barrel。

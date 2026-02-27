@@ -56,7 +56,8 @@ createFile(
 
 ## 目录结构
 
-- \`components/\`: 工作区 UI 组件。
+- \`components/\`: 模块入口与工作区装配。
+- \`components/workspace/\`: 工作区实现（建议按 sections/hooks/actions 继续拆分）。
 - \`constants/\`: 预设文案与静态配置。
 - \`services/\`: 纯函数服务（API、导出、预检查）。
 - \`types/\`: 工具域类型定义。
@@ -64,15 +65,17 @@ createFile(
 ## 集成清单
 
 1. 在 \`config/tools-registry.ts\` 新增工具项（\`id\` 与 \`route\`）。
-2. 在 \`app/(tools)/apps/[tool]/page.tsx\` 注入工作区组件分支。
-3. 根据实际后端能力完善 \`services/${moduleId}-api.ts\` 的远程解析逻辑。
-4. 为导出逻辑补充 \`scripts/word-export-regression.config.js\` 的守护规则配置。
+2. 在 \`app/(tools)/apps/[tool]/page.tsx\` 的 \`specializedFormWorkspaceByToolId\` 注册工作区组件。
+3. 在 \`features/tools/shared/constants/tool-runtime-registry.ts\` 注册 runtime 合约。
+4. 在 \`features/tools/shared/constants/tool-backend-manifest.ts\` 注册后端能力与端点。
+5. 根据实际后端能力完善 \`services/${moduleId}-api.ts\` 的远程解析逻辑。
+6. 为导出逻辑补充 \`scripts/word-export-regression.config.js\` 的守护规则配置。
 `
 )
 
 createFile(
   "index.ts",
-  `export { ${workspaceComponentName} } from "@/features/tools/${moduleId}/components/${moduleId}-workspace"
+  `export { ${workspaceComponentName} } from "@/features/tools/${moduleId}/components/workspace"
 export { ${moduleCamel}RuntimeContract } from "@/features/tools/${moduleId}/services/${moduleId}-runtime"
 `
 )
@@ -401,6 +404,18 @@ export async function export${modulePascal}Word(
 
 createFile(
   `components/${moduleId}-workspace.tsx`,
+  `export { ${workspaceComponentName} } from "@/features/tools/${moduleId}/components/workspace/${moduleId}-workspace"
+`
+)
+
+createFile(
+  "components/workspace/index.ts",
+  `export { ${workspaceComponentName} } from "@/features/tools/${moduleId}/components/workspace/${moduleId}-workspace"
+`
+)
+
+createFile(
+  `components/workspace/${moduleId}-workspace.tsx`,
   `"use client"
 
 import * as React from "react"
@@ -416,6 +431,7 @@ import {
   ToolPromoNotice,
   ToolSectionHeading,
 } from "@/features/tools/shared/components/tool-workspace-modules"
+import { ToolWorkspaceShell } from "@/features/tools/shared/components/tool-workspace-shell"
 import {
   ToolNoticeSlot,
 } from "@/features/tools/shared/components/tool-workspace-primitives"
@@ -623,84 +639,82 @@ export function ${workspaceComponentName}({
   )
 
   return (
-    <div className="tools-word-theme tools-paper-bg relative -m-3 min-h-[calc(100vh-3.5rem)] overflow-hidden md:-m-4">
-      <div className={toolsWorkspaceLayout.container}>
-        <header className="space-y-4 text-center">
-          <h2 className="text-3xl font-bold text-foreground md:text-4xl">
-            {${moduleConst}_TITLE}
-          </h2>
-          <p className="text-lg text-muted-foreground md:text-xl">
-            ${moduleDescription}
-          </p>
-        </header>
+    <ToolWorkspaceShell>
+      <header className="space-y-4 text-center">
+        <h2 className="text-3xl font-bold text-foreground md:text-4xl">
+          {${moduleConst}_TITLE}
+        </h2>
+        <p className="text-lg text-muted-foreground md:text-xl">
+          ${moduleDescription}
+        </p>
+      </header>
 
-        {workspaceModules.promoNotice ? (
-          <ToolPromoNotice
-            content={smartDocPromoContent}
-            icon={<Wand2 className="size-3.5" />}
+      {workspaceModules.promoNotice ? (
+        <ToolPromoNotice
+          content={smartDocPromoContent}
+          icon={<Wand2 className="size-3.5" />}
+        />
+      ) : null}
+
+      <section className={toolsWorkspaceLayout.surfaceSection}>
+        {workspaceModules.sectionHeading ? (
+          <ToolSectionHeading
+            title="开始使用"
+            description={${moduleConst}_DESCRIPTION}
           />
         ) : null}
 
-        <section className={toolsWorkspaceLayout.surfaceSection}>
-          {workspaceModules.sectionHeading ? (
-            <ToolSectionHeading
-              title="开始使用"
-              description={${moduleConst}_DESCRIPTION}
-            />
+        <div className="space-y-4">
+          <textarea
+            value={aiPrompt}
+            onChange={(event) => setAiPrompt(event.target.value)}
+            placeholder="请输入业务背景，生成初版文档内容..."
+            className="min-h-[260px] w-full resize-y rounded-md border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
+          />
+
+          <div className="flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={handleGenerate}
+              disabled={loading === "generate"}
+              className="tools-word-button-transition inline-flex h-10 cursor-pointer items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading === "generate" ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : null}
+              生成内容
+            </button>
+            <button
+              type="button"
+              onClick={handleExport}
+              disabled={loading === "export"}
+              className="tools-word-button-transition inline-flex h-10 cursor-pointer items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading === "export" ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 size-4" />
+              )}
+              导出Word文档
+            </button>
+          </div>
+
+          {generatedDocument ? (
+            <article className="rounded-md border border-border/70 bg-card/60 p-4">
+              <h3 className="text-base font-semibold text-foreground">
+                {generatedDocument.title}
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {generatedDocument.summary}
+              </p>
+            </article>
           ) : null}
 
-          <div className="space-y-4">
-            <textarea
-              value={aiPrompt}
-              onChange={(event) => setAiPrompt(event.target.value)}
-              placeholder="请输入业务背景，生成初版文档内容..."
-              className="min-h-[260px] w-full resize-y rounded-md border border-input bg-transparent px-4 py-3 text-sm leading-relaxed shadow-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring"
-            />
-
-            <div className="flex flex-wrap justify-center gap-3">
-              <button
-                type="button"
-                onClick={handleGenerate}
-                disabled={loading === "generate"}
-                className="tools-word-button-transition inline-flex h-10 cursor-pointer items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {loading === "generate" ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : null}
-                生成内容
-              </button>
-              <button
-                type="button"
-                onClick={handleExport}
-                disabled={loading === "export"}
-                className="tools-word-button-transition inline-flex h-10 cursor-pointer items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {loading === "export" ? (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                ) : (
-                  <Download className="mr-2 size-4" />
-                )}
-                导出Word文档
-              </button>
-            </div>
-
-            {generatedDocument ? (
-              <article className="rounded-md border border-border/70 bg-card/60 p-4">
-                <h3 className="text-base font-semibold text-foreground">
-                  {generatedDocument.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {generatedDocument.summary}
-                </p>
-              </article>
-            ) : null}
-
-            <ToolNoticeSlot tone={notice.tone} text={notice.text} />
-            {workspaceModules.aiDisclaimer ? <ToolAiGeneratedDisclaimer /> : null}
-          </div>
-        </section>
-      </div>
-    </div>
+          <ToolNoticeSlot tone={notice.tone} text={notice.text} />
+          {workspaceModules.aiDisclaimer ? <ToolAiGeneratedDisclaimer /> : null}
+        </div>
+      </section>
+    </ToolWorkspaceShell>
   )
 }
 `
@@ -714,13 +728,19 @@ for (const file of createdFiles) {
 console.log("\nNext steps:")
 console.log(`1. Register route in config/tools-registry.ts for /apps/${moduleId}`)
 console.log(
-  `2. Wire ${workspaceComponentName} in app/(tools)/apps/[tool]/page.tsx`
+  `2. Register ${workspaceComponentName} in specializedFormWorkspaceByToolId at app/(tools)/apps/[tool]/page.tsx`
 )
-console.log(`3. Replace placeholder logic in services/${moduleId}-api.ts`)
 console.log(
-  `4. Append word export guard config in scripts/word-export-regression.config.js`
+  `3. Register ${moduleCamel}RuntimeContract in features/tools/shared/constants/tool-runtime-registry.ts`
 )
-console.log(`5. Run pnpm tools:module-admission && pnpm tools:word-regression`)
+console.log(
+  `4. Register backend capability in features/tools/shared/constants/tool-backend-manifest.ts`
+)
+console.log(`5. Replace placeholder logic in services/${moduleId}-api.ts`)
+console.log(
+  `6. Append word export guard config in scripts/word-export-regression.config.js`
+)
+console.log(`7. Run pnpm tools:module-admission && pnpm tools:word-regression`)
 console.log("\nSuggested module regression config snippet:")
 console.log(buildWordRegressionConfigSnippet())
 
@@ -778,7 +798,7 @@ function buildWordRegressionConfigSnippet() {
   return `{
   id: "${moduleId}",
   typeFile: "features/tools/${moduleId}/types/${moduleId}.ts",
-  workspaceFile: "features/tools/${moduleId}/components/${moduleId}-workspace.tsx",
+  workspaceFile: "features/tools/${moduleId}/components/workspace/${moduleId}-workspace.tsx",
   exportFile: "features/tools/${moduleId}/services/${moduleId}-word-export.ts",
   precheckFile: "features/tools/${moduleId}/services/${moduleId}-export-precheck.ts",
   workspaceTokens: [

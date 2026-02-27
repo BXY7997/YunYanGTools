@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@canvas/components/ui/card";
 import { Facebook, Instagram, Linkedin } from "lucide-react";
+import { marketingAvatarAssets } from "../lib/local-assets";
 
 interface TeamProps {
   imageUrl: string;
@@ -23,7 +24,7 @@ interface SociaNetworkslProps {
 
 const teamList: TeamProps[] = [
   {
-    imageUrl: "https://i.pravatar.cc/150?img=35",
+    imageUrl: marketingAvatarAssets.team.emma,
     name: "Emma 林芳",
     position: "产品经理",
     socialNetworks: [
@@ -38,7 +39,7 @@ const teamList: TeamProps[] = [
     ],
   },
   {
-    imageUrl: "https://i.pravatar.cc/150?img=60",
+    imageUrl: marketingAvatarAssets.team.john,
     name: "John 张强",
     position: "技术负责人",
     socialNetworks: [
@@ -49,7 +50,7 @@ const teamList: TeamProps[] = [
     ],
   },
   {
-    imageUrl: "https://i.pravatar.cc/150?img=36",
+    imageUrl: marketingAvatarAssets.team.ashley,
     name: "Ashley 王薇",
     position: "前端工程师",
     socialNetworks: [
@@ -64,7 +65,7 @@ const teamList: TeamProps[] = [
     ],
   },
   {
-    imageUrl: "https://i.pravatar.cc/150?img=17",
+    imageUrl: marketingAvatarAssets.team.bruce,
     name: "Bruce 赵明",
     position: "后端工程师",
     socialNetworks: [

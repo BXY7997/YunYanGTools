@@ -20,6 +20,9 @@ interface DraftReadResult<T> {
   version: number
 }
 
+const useClientLayoutEffect =
+  typeof window === "undefined" ? React.useEffect : React.useLayoutEffect
+
 function readLocalDraft<T>(storageKey: string): DraftReadResult<T> | null {
   if (typeof window === "undefined") {
     return null
@@ -65,21 +68,31 @@ export function useLocalDraftState<T>({
 }: UseLocalDraftStateOptions<T>) {
   const [value, setValue] = React.useState<T>(initialValue)
   const [isHydrated, setIsHydrated] = React.useState(false)
+  const migrateRef = React.useRef(migrate)
 
   React.useEffect(() => {
+    migrateRef.current = migrate
+  }, [migrate])
+
+  useClientLayoutEffect(() => {
     const saved = readLocalDraft<T>(storageKey)
     if (saved !== null && saved.value !== null) {
+      let nextValue: T
       if (saved.version === schemaVersion) {
-        setValue(saved.value)
+        nextValue = saved.value
       } else {
-        const migrated = migrate
-          ? migrate(saved.value, saved.version)
+        const migrated = migrateRef.current
+          ? migrateRef.current(saved.value, saved.version)
           : (saved.value as T)
-        setValue(migrated)
+        nextValue = migrated
       }
+
+      setValue((previousValue) =>
+        Object.is(previousValue, nextValue) ? previousValue : nextValue
+      )
     }
     setIsHydrated(true)
-  }, [migrate, schemaVersion, storageKey])
+  }, [schemaVersion, storageKey])
 
   React.useEffect(() => {
     if (!isHydrated || typeof window === "undefined") {

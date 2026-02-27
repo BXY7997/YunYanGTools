@@ -11,6 +11,40 @@ export interface ToolRuntimeGenerateResponse<TDocument> {
   message?: string
 }
 
+export interface ToolRuntimeSyncPayload<TDraft, TPreview> {
+  draft: TDraft
+  preview: TPreview | null
+  meta?: Record<string, unknown>
+}
+
+export interface ToolRuntimeLoadResponse<TDraft> {
+  draft: TDraft | null
+  source: "local" | "remote"
+  message?: string
+}
+
+export interface ToolRuntimeSyncResponse {
+  source: "local" | "remote"
+  syncedAt: string
+  message?: string
+}
+
+export type ToolRuntimeActionStage =
+  | "idle"
+  | "loading"
+  | "generating"
+  | "exporting"
+  | "syncing"
+  | "running"
+  | "error"
+
+export interface ToolRuntimeCapabilities {
+  load: boolean
+  generate: boolean
+  export: boolean
+  sync: boolean
+}
+
 export interface ToolRuntimeContract<
   TGenerateRequest,
   TGenerateResponse,
@@ -18,10 +52,16 @@ export interface ToolRuntimeContract<
   TExportResponse,
   TPreview,
   TDraft,
+  TSyncPayload = ToolRuntimeSyncPayload<TDraft, TPreview>,
+  TLoadDraft = TDraft,
 > {
   toolId: string
   schemaVersion: number
   defaultExportPresetId: WordExportPresetId
+  capabilities: ToolRuntimeCapabilities
+  load: (
+    options?: ToolRuntimeActionOptions
+  ) => Promise<ToolRuntimeLoadResponse<TLoadDraft>>
   generate: (
     request: TGenerateRequest,
     options?: ToolRuntimeActionOptions
@@ -30,6 +70,10 @@ export interface ToolRuntimeContract<
     request: TExportRequest,
     options?: ToolRuntimeActionOptions
   ) => Promise<TExportResponse>
+  sync: (
+    payload: TSyncPayload,
+    options?: ToolRuntimeActionOptions
+  ) => Promise<ToolRuntimeSyncResponse>
   precheck: (...args: unknown[]) => string[]
   buildPreview: (generated: TPreview | null, draft: TDraft) => TPreview
 }

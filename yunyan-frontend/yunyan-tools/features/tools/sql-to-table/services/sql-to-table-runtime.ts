@@ -2,6 +2,7 @@ import { defaultWordExportPresetId } from "@/features/tools/shared/constants/wor
 import { createToolRuntimeContract } from "@/features/tools/shared/services/tool-runtime"
 import type { ToolRuntimeContract } from "@/features/tools/shared/types/tool-runtime"
 import {
+  sqlToTableDefaultCaptionChapterSerial,
   sqlToTableDefaultFormat,
   sqlToTableDefaultPaperStyle,
   sqlToTableDefaultTypeCase,
@@ -86,5 +87,6 @@ export const sqlToTableRuntimeDraftDefaults: SqlToTableDraftState = {
 
 export const sqlToTableRuntimeExportDefaults = {
   format: sqlToTableDefaultFormat,
+  captionChapterSerial: sqlToTableDefaultCaptionChapterSerial,
   paperTemplateId: sqlToTableDefaultPaperStyle,
 } as const

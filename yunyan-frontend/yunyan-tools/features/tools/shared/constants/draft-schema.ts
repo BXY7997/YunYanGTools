@@ -7,4 +7,7 @@ export const toolDraftSchemaVersions = {
   aigcReduce: 1,
   paperRewrite: 1,
   pseudoCode: 1,
+  coverCard: 1,
+  codeRunner: 2,
+  fileCollector: 1,
 } as const

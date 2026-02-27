@@ -6,6 +6,7 @@ import type {
 } from "@/features/tools/shared/types/word-export"
 import type { WordTableDocument } from "@/features/tools/word-table/types/word-table"
 import { defaultWordExportPresetId } from "@/features/tools/shared/constants/word-export-presets"
+import { wordExportAcademicNoticeCopy } from "@/features/tools/shared/constants/word-export-standard"
 
 export function getWordTableExportPrecheckNotices(
   document: WordTableDocument,
@@ -33,12 +34,13 @@ export function getWordTableExportPrecheckNotices(
     notices.push("存在空表头，建议补全字段名称后再导出。")
   }
 
+  // 论文排版建议：正文优先按语义对齐而非全部居中。
   if (alignmentMode === "all-center") {
-    notices.push("当前已启用全部居中；如需更符合论文习惯，建议使用论文标准对齐。")
+    notices.push(wordExportAcademicNoticeCopy.allCenter)
   }
 
   if (presetId !== "thesis-standard") {
-    notices.push("当前导出预设非论文标准，若用于学术提交建议切换论文标准预设。")
+    notices.push(wordExportAcademicNoticeCopy.nonThesisPreset)
   }
 
   return notices

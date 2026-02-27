@@ -3,6 +3,7 @@
 import * as React from "react"
 import { ChevronDown } from "lucide-react"
 
+import { toolTypography } from "@/features/tools/shared/constants/tool-typography"
 import { cn } from "@/lib/utils"
 
 interface ToolCollapsibleFooterProps {
@@ -98,7 +99,7 @@ export function ToolCollapsibleFooter({
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 pb-2">
-        <p className="text-xs leading-5 text-muted-foreground/90">
+        <p className={toolTypography.footerHint}>
           {expanded ? "底部说明已展开，可继续阅读后收起。" : collapsedHint}
         </p>
         <button

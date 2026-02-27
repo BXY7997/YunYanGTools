@@ -8,6 +8,7 @@ import {
 } from "@canvas/components/ui/card";
 import { ScrollAnimation } from "./ui/scroll-animation";
 import { SectionHeader } from "@canvas/components/home/SectionHeader";
+import { marketingAvatarAssets } from "../lib/local-assets";
 
 interface TestimonialProps {
   image: string;
@@ -18,13 +19,13 @@ interface TestimonialProps {
 
 const testimonials: TestimonialProps[] = [
   {
-    image: "https://github.com/shadcn.png",
+    image: marketingAvatarAssets.testimonials,
     name: "张明",
     userName: "@zhangming_dev",
     comment: "这个绘图工具太棒了！AI 生成 ER 图的速度超乎想象。不仅节省了时间，还帮我发现了一些逻辑漏洞。",
   },
   {
-    image: "https://github.com/shadcn.png",
+    image: marketingAvatarAssets.testimonials,
     name: "李华",
     userName: "@lihua_pm",
     comment:
@@ -32,28 +33,28 @@ const testimonials: TestimonialProps[] = [
   },
 
   {
-    image: "https://github.com/shadcn.png",
+    image: marketingAvatarAssets.testimonials,
     name: "王小五",
     userName: "@wang_x5",
     comment:
       "协作功能非常流畅，我们可以实时在画布上讨论架构设计，再也不用反复发截图了。界面也很清爽。",
   },
   {
-    image: "https://github.com/shadcn.png",
+    image: marketingAvatarAssets.testimonials,
     name: "赵敏",
     userName: "@zhaomin_arch",
     comment:
       "本地优先的设计理念让我对数据安全非常有信心。对于处理敏感数据的企业来说，这是必须的功能。",
   },
   {
-    image: "https://github.com/shadcn.png",
+    image: marketingAvatarAssets.testimonials,
     name: "孙志平",
     userName: "@sun_zp",
     comment:
       "矢量导出功能非常清晰，直接插入到我们的技术文档中效果完美。强烈推荐给所有开发人员。",
   },
   {
-    image: "https://github.com/shadcn.png",
+    image: marketingAvatarAssets.testimonials,
     name: "周小梅",
     userName: "@zhou_xm",
     comment:

@@ -119,3 +119,14 @@ export async function renderPseudoCodeMarkup({
     }
   }
 }
+
+export async function renderPseudoCodeMarkupStrict(
+  params: RenderPseudoCodeParams
+): Promise<string> {
+  const rendered = await renderPseudoCodeMarkup(params)
+  const markup = rendered.markup.trim()
+  if (!markup || rendered.error) {
+    throw new Error(rendered.error || "伪代码渲染失败，无法导出。")
+  }
+  return markup
+}

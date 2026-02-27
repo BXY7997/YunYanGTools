@@ -1,7 +1,6 @@
 import { z } from "zod"
 
 import {
-  isToolsApiConfigured,
   toolsApiEndpoints,
 } from "@/features/tools/shared/constants/api-config"
 import {
@@ -14,6 +13,10 @@ import {
   ToolApiError,
   toolsApiClient,
 } from "@/features/tools/shared/services/tool-api-client"
+import {
+  createToolWordFileName,
+  shouldUseToolRemote,
+} from "@/features/tools/shared/services/tool-api-runtime"
 import {
   composeVersionNotice,
   readSchemaVersion,
@@ -69,23 +72,6 @@ const rewriteRules: Array<{ from: RegExp; to: string }> = [
   { from: /能够满足/g, to: "可满足" },
   { from: /进一步提高/g, to: "继续提升" },
 ]
-
-function shouldUseRemote(preferRemote: boolean | undefined) {
-  if (!preferRemote) {
-    return false
-  }
-  return isToolsApiConfigured()
-}
-
-function createExportFileName() {
-  const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
-  const dateToken = dateFormatter.format(new Date()).replace(/\//g, "-")
-  return `论文降重报告-${dateToken}.doc`
-}
 
 function toRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -462,7 +448,7 @@ export async function generatePaperRewriteData(
 ): Promise<PaperRewriteGenerateResponse> {
   let fallbackNotice = ""
 
-  if (shouldUseRemote(options.preferRemote)) {
+  if (shouldUseToolRemote(options.preferRemote)) {
     try {
       const remoteRawResponse = await requestRemoteParse(request, options)
       const remoteResponse = extractRemoteResult(remoteRawResponse)
@@ -543,7 +529,7 @@ export async function exportPaperRewriteReport(
 ): Promise<PaperRewriteExportResult> {
   let fallbackNotice = ""
 
-  if (shouldUseRemote(options.preferRemote)) {
+  if (shouldUseToolRemote(options.preferRemote)) {
     try {
       const remoteBlob = await toolsApiClient.request<Blob, PaperRewriteExportRequest>(
         toolsApiEndpoints.paperRewrite.exportReport,
@@ -557,7 +543,7 @@ export async function exportPaperRewriteReport(
 
       return {
         blob: remoteBlob,
-        fileName: createExportFileName(),
+        fileName: createToolWordFileName("论文降重报告"),
         source: "remote",
         fileFormat: "doc",
         message: toolApiCopy.wordExportSuccess,
@@ -580,7 +566,7 @@ export async function exportPaperRewriteReport(
 
   return {
     blob: createPaperRewriteReportBlob(request),
-    fileName: createExportFileName(),
+    fileName: createToolWordFileName("论文降重报告"),
     source: "local",
     fileFormat: "doc",
     message: composeNoticeMessage(toolApiCopy.wordExportSuccess, fallbackNotice),

@@ -35,7 +35,7 @@ export function ToolsHeroSpotlight({
   return (
     <section
       aria-labelledby="tools-hero-title"
-      className="relative rounded-[28px] border border-border bg-card p-4 md:p-5"
+      className="relative rounded-2xl border border-border bg-card p-3 md:p-4"
     >
       <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-2.5">

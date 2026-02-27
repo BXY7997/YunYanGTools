@@ -1,4 +1,5 @@
-import { renderPseudoCodeMarkup } from "@/features/tools/pseudo-code/services/pseudo-code-renderer"
+import { resolvePseudoCodeStructuredLines } from "@/features/tools/pseudo-code/services/pseudo-code-structured-lines"
+import type { PseudoCodeStructuredLine } from "@/features/tools/pseudo-code/services/pseudo-code-structured-lines"
 import type {
   PseudoCodeDocument,
   PseudoCodeImageExportFormat,
@@ -9,174 +10,157 @@ function escapeXml(value: string) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
+    .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;")
 }
 
-/**
- * 导出图稿按论文黑白版面收敛：
- * - 去除装饰背景/圆角/网格
- * - 保留算法顶线/中线/底线层级
- * 参考：CY/T 171-2019（插图规范）+ CY/T 170-2019（三线线宽层级）
- */
-const pseudoCodeExportStyles = String.raw`
-  .pseudo-code-export-shell {
-    display: inline-block;
-    margin: 0;
-    padding: 0;
-    color: #000;
-    background: #fff;
-    font-family: "Times New Roman", "Noto Serif SC", serif;
-  }
-  .pseudo-code-export-shell .ps-root {
-    margin: 0;
-    padding: 0;
-    font-family: "Times New Roman", "Noto Serif SC", serif;
-    font-size: 10.5pt;
-    font-weight: 400;
-    -webkit-font-smoothing: antialiased !important;
-  }
-  .pseudo-code-export-shell .ps-root .ps-algorithm {
-    margin: 0;
-    border-top: 1.5pt solid #000;
-    border-bottom: 1.5pt solid #000;
-  }
-  .pseudo-code-export-shell .ps-root .ps-algorithm.with-caption > .ps-line:first-child {
-    border-bottom: 0.75pt solid #000;
-  }
-  .pseudo-code-export-shell .ps-root .ps-line {
-    margin: 0;
-    padding: 0;
-    line-height: 1.4;
-  }
-  .pseudo-code-export-shell .ps-root .ps-keyword {
-    font-weight: 700;
-  }
-  .pseudo-code-export-shell .ps-root .ps-funcname {
-    font-weight: 500;
-    font-variant: small-caps;
-  }
-  .pseudo-code-export-shell .ps-root .ps-linenum {
-    width: 2.1em;
-    text-align: right;
-    display: inline-block;
-    position: relative;
-    padding-right: 0.35em;
-    font-size: 0.86em;
-    opacity: 0.78;
-  }
-  .pseudo-code-export-shell .ps-root .ps-algorithmic.with-linenum .ps-line.ps-code {
-    text-indent: -2.1em;
-  }
-  .pseudo-code-export-shell .ps-root .ps-algorithmic.with-linenum .ps-line.ps-code > span {
-    text-indent: 0;
-  }
-  .pseudo-code-export-shell .ps-root .ps-algorithmic.with-scopelines div.ps-block {
-    border-left-style: solid;
-    border-left-width: 0.08em;
-    padding-left: 0.58em;
-  }
-  .pseudo-code-export-shell .ps-root .ps-algorithmic.with-scopelines > div.ps-block {
-    border-left: none;
-  }
-  .pseudo-code-export-shell .ps-root .katex {
-    font-size: 1em;
-  }
-`
-
-function estimateFallbackSize(pseudoDocument: PseudoCodeDocument) {
-  const maxLineLength = pseudoDocument.normalizedLines.reduce((maxLength, line) => {
-    return Math.max(maxLength, line.trim().length)
-  }, 0)
-  const width = Math.max(240, Math.min(1800, Math.round(maxLineLength * 8 + 96)))
-  const height = Math.max(
-    96,
-    Math.min(2600, Math.round(pseudoDocument.stats.lineCount * 22 + 56))
-  )
-  return { width, height }
-}
-
-function buildFallbackMarkup(pseudoDocument: PseudoCodeDocument, error: string) {
-  const sourceText = escapeXml(pseudoDocument.source)
-  const errorText = escapeXml(error)
-  return `<div class="ps-root"><p class="ps-line"><span class="ps-keyword">Export Error:</span> ${errorText}</p><pre style="white-space:pre-wrap;line-height:1.5;margin-top:8px;">${sourceText}</pre></div>`
-}
-
-async function measureRenderedSize(
-  contentMarkup: string,
-  fallbackSize: { width: number; height: number }
-) {
+async function waitDocumentFontsReady() {
   if (typeof window === "undefined" || typeof document === "undefined") {
-    return fallbackSize
+    return
   }
 
-  const host = window.document.createElement("div")
-  host.style.position = "fixed"
-  host.style.left = "-10000px"
-  host.style.top = "0"
-  host.style.visibility = "hidden"
-  host.style.pointerEvents = "none"
-  host.style.margin = "0"
-  host.style.padding = "0"
-  host.style.width = "auto"
-  host.style.height = "auto"
-  host.style.zIndex = "-1"
-  host.innerHTML = `<style>${pseudoCodeExportStyles}</style><div class="pseudo-code-export-shell">${contentMarkup}</div>`
+  const fontSet = window.document.fonts
+  if (!fontSet?.ready) {
+    return
+  }
 
-  window.document.body.appendChild(host)
   try {
-    const shell = host.querySelector(".pseudo-code-export-shell") as HTMLElement | null
-    if (!shell) {
-      return fallbackSize
-    }
-
-    const rect = shell.getBoundingClientRect()
-    const width = Math.max(
-      160,
-      Math.min(2200, Math.ceil(shell.scrollWidth || rect.width || fallbackSize.width))
-    )
-    const height = Math.max(
-      72,
-      Math.min(3200, Math.ceil(shell.scrollHeight || rect.height || fallbackSize.height))
-    )
-
-    return { width, height }
-  } finally {
-    host.remove()
+    await Promise.race([
+      fontSet.ready,
+      new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 1200)
+      }),
+    ])
+  } catch {
+    // Keep export pipeline deterministic even if font loading fails.
   }
+}
+
+function resolveAlgorithmCaption(pseudoDocument: PseudoCodeDocument) {
+  const title = pseudoDocument.title.trim()
+  if (title) {
+    return title
+  }
+  const algorithmName = pseudoDocument.algorithmName.trim() || "伪代码流程"
+  return `${pseudoDocument.renderConfig.titlePrefix}${pseudoDocument.renderConfig.titleCounter} ${algorithmName}`
+}
+
+interface PseudoCodeSvgLayout {
+  width: number
+  height: number
+  topRuleY: number
+  captionY: number
+  midRuleY: number
+  bodyStartY: number
+  bottomRuleY: number
+  contentStartX: number
+  numberColumnWidth: number
+  indentUnitPx: number
+  lineHeightPx: number
+}
+
+function buildSvgLayout(
+  lines: PseudoCodeStructuredLine[],
+  showLineNumber: boolean,
+  captionText: string
+): PseudoCodeSvgLayout {
+  const marginX = 24
+  const marginY = 20
+  const captionBoxHeight = 28
+  const numberColumnWidth = showLineNumber ? 44 : 0
+  const indentUnitPx = 18
+  const lineHeightPx = 22
+
+  const maxIndentedTextLength = lines.reduce((maxLength, line) => {
+    return Math.max(maxLength, line.text.length + line.indentDepth * 2)
+  }, 0)
+  const maxCaptionLength = captionText.length + 4
+  const measuredChars = Math.max(maxIndentedTextLength, maxCaptionLength, 24)
+  const contentWidth = Math.max(
+    360,
+    Math.min(2200, Math.round(measuredChars * 8 + numberColumnWidth + 40))
+  )
+
+  const width = marginX * 2 + contentWidth
+  const topRuleY = marginY
+  const captionY = topRuleY + 19
+  const midRuleY = topRuleY + captionBoxHeight
+  const bodyStartY = midRuleY + 16
+  const bottomRuleY = bodyStartY + lineHeightPx * Math.max(1, lines.length) + 8
+  const height = bottomRuleY + marginY
+
+  return {
+    width,
+    height,
+    topRuleY,
+    captionY,
+    midRuleY,
+    bodyStartY,
+    bottomRuleY,
+    contentStartX: marginX,
+    numberColumnWidth,
+    indentUnitPx,
+    lineHeightPx,
+  }
+}
+
+function buildCodeLineSvgMarkup(
+  lines: PseudoCodeStructuredLine[],
+  layout: PseudoCodeSvgLayout,
+  showLineNumber: boolean,
+  lineNumberPunc: string
+) {
+  return lines
+    .map((line, index) => {
+      const y = layout.bodyStartY + index * layout.lineHeightPx
+      const textX =
+        layout.contentStartX +
+        layout.numberColumnWidth +
+        line.indentDepth * layout.indentUnitPx
+      const numberX = layout.contentStartX + layout.numberColumnWidth - 8
+      const numberText = `${index + 1}${lineNumberPunc}`
+
+      const numberMarkup = showLineNumber
+        ? `<text x="${numberX}" y="${y}" text-anchor="end" dominant-baseline="hanging" font-family="Times New Roman, serif" font-size="12" fill="#1f2937">${escapeXml(numberText)}</text>`
+        : ""
+
+      return `${numberMarkup}<text x="${textX}" y="${y}" dominant-baseline="hanging" font-family="Consolas, 'Courier New', monospace" font-size="14" fill="#0f172a">${escapeXml(line.text)}</text>`
+    })
+    .join("")
 }
 
 async function createPseudoCodeSvgMarkup(pseudoDocument: PseudoCodeDocument) {
-  const rendered = await renderPseudoCodeMarkup({
-    source: pseudoDocument.source,
-    title: pseudoDocument.title,
-    renderConfig: pseudoDocument.renderConfig,
-  })
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    throw new Error("图片导出仅支持在浏览器环境执行。")
+  }
 
-  const contentMarkup = rendered.error
-    ? buildFallbackMarkup(pseudoDocument, rendered.error)
-    : rendered.markup
-  const measured = await measureRenderedSize(
-    contentMarkup,
-    estimateFallbackSize(pseudoDocument)
+  await waitDocumentFontsReady()
+  const lines = await resolvePseudoCodeStructuredLines(pseudoDocument)
+  const captionText = resolveAlgorithmCaption(pseudoDocument)
+  const showLineNumber = pseudoDocument.renderConfig.showLineNumber
+  const lineNumberPunc = pseudoDocument.renderConfig.lineNumberPunc || "."
+  const layout = buildSvgLayout(lines, showLineNumber, captionText)
+  const lineMarkup = buildCodeLineSvgMarkup(
+    lines,
+    layout,
+    showLineNumber,
+    lineNumberPunc
   )
-  const width = measured.width + 2
-  const height = measured.height + 2
 
-  const markup = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <rect x="0" y="0" width="${width}" height="${height}" fill="#ffffff" />
-  <foreignObject x="1" y="1" width="${measured.width}" height="${measured.height}">
-    <div xmlns="http://www.w3.org/1999/xhtml" class="pseudo-code-export-shell">
-      <style>${pseudoCodeExportStyles}</style>
-      ${contentMarkup}
-    </div>
-  </foreignObject>
+  const markup = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}">
+  <rect x="0" y="0" width="${layout.width}" height="${layout.height}" fill="#ffffff" />
+  <line x1="${layout.contentStartX}" y1="${layout.topRuleY}" x2="${layout.width - layout.contentStartX}" y2="${layout.topRuleY}" stroke="#000000" stroke-width="2" />
+  <text x="${layout.width / 2}" y="${layout.captionY}" text-anchor="middle" dominant-baseline="middle" font-family="'SimHei','Noto Sans CJK SC',sans-serif" font-size="14" font-weight="700" fill="#000000">${escapeXml(captionText)}</text>
+  <line x1="${layout.contentStartX}" y1="${layout.midRuleY}" x2="${layout.width - layout.contentStartX}" y2="${layout.midRuleY}" stroke="#000000" stroke-width="1" />
+  ${lineMarkup}
+  <line x1="${layout.contentStartX}" y1="${layout.bottomRuleY}" x2="${layout.width - layout.contentStartX}" y2="${layout.bottomRuleY}" stroke="#000000" stroke-width="2" />
 </svg>`
 
   return {
     markup,
-    width,
-    height,
+    width: layout.width,
+    height: layout.height,
   }
 }
 
@@ -194,26 +178,32 @@ function loadImageFromUrl(url: string) {
   })
 }
 
-export async function createPseudoCodePngBlob(pseudoDocument: PseudoCodeDocument) {
+async function rasterizeSvgMarkupToPngBlob(svg: {
+  markup: string
+  width: number
+  height: number
+}) {
   if (typeof window === "undefined" || typeof globalThis.document === "undefined") {
     throw new Error("PNG导出仅支持在浏览器环境执行。")
   }
 
-  const svg = await createPseudoCodeSvgMarkup(pseudoDocument)
+  await waitDocumentFontsReady()
+
+  const scale = 2
+  const canvas = window.document.createElement("canvas")
+  canvas.width = Math.ceil(svg.width * scale)
+  canvas.height = Math.ceil(svg.height * scale)
+
+  const context = canvas.getContext("2d")
+  if (!context) {
+    throw new Error("PNG导出失败：无法创建画布上下文。")
+  }
+
   const svgBlob = new Blob([svg.markup], { type: "image/svg+xml;charset=utf-8" })
   const objectUrl = URL.createObjectURL(svgBlob)
 
   try {
     const image = await loadImageFromUrl(objectUrl)
-    const scale = 2
-    const canvas = window.document.createElement("canvas")
-    canvas.width = Math.ceil(svg.width * scale)
-    canvas.height = Math.ceil(svg.height * scale)
-
-    const context = canvas.getContext("2d")
-    if (!context) {
-      throw new Error("PNG导出失败：无法创建画布上下文。")
-    }
 
     context.setTransform(scale, 0, 0, scale, 0, 0)
     context.fillStyle = "#ffffff"
@@ -232,6 +222,15 @@ export async function createPseudoCodePngBlob(pseudoDocument: PseudoCodeDocument
   } finally {
     URL.revokeObjectURL(objectUrl)
   }
+}
+
+export async function createPseudoCodePngBlob(pseudoDocument: PseudoCodeDocument) {
+  if (typeof window === "undefined" || typeof globalThis.document === "undefined") {
+    throw new Error("PNG导出仅支持在浏览器环境执行。")
+  }
+
+  const svg = await createPseudoCodeSvgMarkup(pseudoDocument)
+  return rasterizeSvgMarkupToPngBlob(svg)
 }
 
 export function createPseudoCodeExportFileName(
@@ -264,7 +263,11 @@ export function triggerPseudoCodeImageDownload(blob: Blob, fileName: string) {
   const anchor = document.createElement("a")
   anchor.href = url
   anchor.download = fileName
+  anchor.rel = "noopener"
+  anchor.style.display = "none"
+  document.body.appendChild(anchor)
   anchor.click()
+  anchor.remove()
   window.setTimeout(() => {
     URL.revokeObjectURL(url)
   }, 300)

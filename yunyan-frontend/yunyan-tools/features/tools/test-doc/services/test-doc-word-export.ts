@@ -1,5 +1,6 @@
 import { thesisTableClassicStyle } from "@/features/tools/shared/constants/thesis-table-format"
 import { assertWordExportHtml } from "@/features/tools/shared/services/word-export-guard"
+import { assertWordExportStructuredPolicy } from "@/features/tools/shared/services/word-export-standard-guard"
 import {
   buildTableCaption,
   toolsWordCaptionRules,
@@ -269,6 +270,9 @@ export function createTestDocWordBlob(payload: TestDocExportRequest) {
       "border-bottom",
       "<table",
     ],
+  })
+  assertWordExportStructuredPolicy(html, {
+    context: "功能测试文档",
   })
   return createWordDocumentBlob(html)
 }

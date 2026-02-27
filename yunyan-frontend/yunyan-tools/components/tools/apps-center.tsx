@@ -6,6 +6,7 @@ import type { CSSProperties } from "react"
 import { getFlatToolLinks, getToolGroupByChildId } from "@/config/tools-registry"
 import { ToolBadgeChip } from "@/components/tools/tool-badge"
 import { ToolIcon } from "@/components/tools/tool-icon"
+import { toolsLayoutTokens } from "@/features/tools/shared/constants/tools-layout-tokens"
 import { cn } from "@/lib/utils"
 import type { ToolMenuLinkItem } from "@/types/tools"
 
@@ -25,7 +26,7 @@ const stageDefinitions: StageDefinition[] = [
   },
   {
     id: "stage-development",
-    toolIds: ["pseudo-code", "course-code", "code-runner", "test-doc"],
+    toolIds: ["pseudo-code", "code-runner", "test-doc"],
   },
   {
     id: "stage-delivery",
@@ -52,7 +53,6 @@ const toolPreviewImageMap: Record<string, string> = {
   "architecture-diagram": "/canvas-assets/looking-ahead.png",
   "software-engineering": "/canvas-assets/growth.png",
   "pseudo-code": "/images/blog/blog-post-2.jpg",
-  "course-code": "/images/blog/blog-post-3.jpg",
   "code-runner": "/images/blog/blog-post-4.jpg",
   "test-doc": "/images/hero.png",
   "smart-doc": "/og.jpg",
@@ -125,10 +125,18 @@ export function AppsCenter() {
   return (
     <div
       style={toolsThemeStyle}
-      className="mx-auto w-full max-w-[1520px] rounded-3xl bg-background p-1"
+      className={cn(
+        toolsLayoutTokens.toolsHub.shellClass,
+        toolsLayoutTokens.toolsHub.pagePaddingClass
+      )}
     >
-      <div className="space-y-4">
-        <section className="rounded-[28px] border border-border bg-card p-4 md:p-5">
+      <div className={toolsLayoutTokens.toolsHub.sectionGapClass}>
+        <section
+          className={cn(
+            "rounded-2xl border border-border bg-card",
+            toolsLayoutTokens.toolsHub.sectionPaddingClass
+          )}
+        >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-3xl space-y-2.5">
               <span className="inline-flex size-9 items-center justify-center rounded-2xl border border-border bg-muted text-primary">
@@ -171,7 +179,12 @@ export function AppsCenter() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-4 md:p-5">
+        <section
+          className={cn(
+            "rounded-2xl border border-border bg-card",
+            toolsLayoutTokens.toolsHub.sectionPaddingClass
+          )}
+        >
           <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-heading text-2xl text-card-foreground">
               应用中心

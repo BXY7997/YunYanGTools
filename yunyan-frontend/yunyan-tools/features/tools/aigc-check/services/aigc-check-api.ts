@@ -1,7 +1,6 @@
 import { z } from "zod"
 
 import {
-  isToolsApiConfigured,
   toolsApiEndpoints,
 } from "@/features/tools/shared/constants/api-config"
 import {
@@ -14,6 +13,10 @@ import {
   ToolApiError,
   toolsApiClient,
 } from "@/features/tools/shared/services/tool-api-client"
+import {
+  createToolWordFileName,
+  shouldUseToolRemote,
+} from "@/features/tools/shared/services/tool-api-runtime"
 import {
   composeVersionNotice,
   readSchemaVersion,
@@ -50,23 +53,6 @@ const remoteDetectSchema = z
     aigcRate: z.unknown().optional(),
   })
   .passthrough()
-
-function shouldUseRemote(preferRemote: boolean | undefined) {
-  if (!preferRemote) {
-    return false
-  }
-  return isToolsApiConfigured()
-}
-
-function createExportFileName() {
-  const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  })
-  const dateToken = dateFormatter.format(new Date()).replace(/\//g, "-")
-  return `AIGC检测报告-${dateToken}.doc`
-}
 
 function toRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -483,7 +469,7 @@ export async function generateAigcCheckData(
 ): Promise<AigcCheckGenerateResponse> {
   let fallbackNotice = ""
 
-  if (shouldUseRemote(options.preferRemote)) {
+  if (shouldUseToolRemote(options.preferRemote)) {
     try {
       const remoteRawResponse = await requestRemoteDetect(request, options)
       const remoteResponse = extractRemoteResult(remoteRawResponse)
@@ -525,7 +511,7 @@ export async function exportAigcCheckReport(
 ): Promise<AigcCheckExportResult> {
   let fallbackNotice = ""
 
-  if (shouldUseRemote(options.preferRemote)) {
+  if (shouldUseToolRemote(options.preferRemote)) {
     try {
       const remoteBlob = await toolsApiClient.request<Blob, AigcCheckExportRequest>(
         toolsApiEndpoints.aigcCheck.exportReport,
@@ -539,7 +525,7 @@ export async function exportAigcCheckReport(
 
       return {
         blob: remoteBlob,
-        fileName: createExportFileName(),
+        fileName: createToolWordFileName("AIGC检测报告"),
         source: "remote",
         fileFormat: "doc",
         message: toolApiCopy.wordExportSuccess,
@@ -562,7 +548,7 @@ export async function exportAigcCheckReport(
 
   return {
     blob: createAigcCheckReportBlob(request),
-    fileName: createExportFileName(),
+    fileName: createToolWordFileName("AIGC检测报告"),
     source: "local",
     fileFormat: "doc",
     message: composeNoticeMessage(toolApiCopy.wordExportSuccess, fallbackNotice),

@@ -11,6 +11,7 @@ import { ToolsStageFloatingRail } from "@/components/tools/tools-stage-floating-
 import { ToolsHeroSpotlight } from "@/components/tools/tools-hero-spotlight"
 import { ToolBadgeChip } from "@/components/tools/tool-badge"
 import { ToolIcon } from "@/components/tools/tool-icon"
+import { toolsLayoutTokens } from "@/features/tools/shared/constants/tools-layout-tokens"
 import { cn } from "@/lib/utils"
 import type { ToolMenuLinkItem } from "@/types/tools"
 
@@ -51,7 +52,7 @@ const stageDefinitions: StageDefinition[] = [
     label: "阶段 03",
     title: "代码开发阶段",
     summary: "将需求落地为可运行实现，并同步验证关键质量指标。",
-    toolIds: ["pseudo-code", "course-code", "code-runner", "test-doc"],
+    toolIds: ["pseudo-code", "code-runner", "test-doc"],
   },
   {
     id: "stage-delivery",
@@ -85,7 +86,6 @@ const toolPreviewImageMap: Record<string, string> = {
   "architecture-diagram": "/canvas-assets/looking-ahead.png",
   "software-engineering": "/canvas-assets/growth.png",
   "pseudo-code": "/images/blog/blog-post-2.jpg",
-  "course-code": "/images/blog/blog-post-3.jpg",
   "code-runner": "/images/blog/blog-post-4.jpg",
   "test-doc": "/images/hero.png",
   "smart-doc": "/og.jpg",
@@ -154,12 +154,15 @@ export default function ToolsPage() {
   return (
     <div
       style={toolsThemeStyle}
-      className="mx-auto w-full max-w-[1520px] rounded-3xl bg-background p-1"
+      className={cn(
+        toolsLayoutTokens.toolsHub.shellClass,
+        toolsLayoutTokens.toolsHub.pagePaddingClass
+      )}
     >
-      <section className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <section className="grid gap-3 md:gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
         <ToolsStageFloatingRail stages={sidebarStages} />
 
-        <div className="space-y-4">
+        <div className={toolsLayoutTokens.toolsHub.sectionGapClass}>
           <ToolsHeroSpotlight
             spotlight={spotlight}
             previewSrc={getToolPreviewSrc(spotlight.id, 0)}
@@ -170,7 +173,10 @@ export default function ToolsPage() {
               key={stage.id}
               id={stage.id}
               aria-labelledby={`${stage.id}-title`}
-              className="scroll-mt-24 rounded-2xl border border-border bg-card p-4 md:p-5"
+              className={cn(
+                "scroll-mt-20 rounded-2xl border border-border bg-card",
+                toolsLayoutTokens.toolsHub.sectionPaddingClass
+              )}
             >
               <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
                 <div className="space-y-2">

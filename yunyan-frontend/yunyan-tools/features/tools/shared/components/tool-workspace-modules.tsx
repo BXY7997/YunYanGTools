@@ -2,8 +2,68 @@ import Link from "next/link"
 import * as React from "react"
 import { AlertCircle } from "lucide-react"
 
+import { toolTypography } from "@/features/tools/shared/constants/tool-typography"
 import { cn } from "@/lib/utils"
 import type { ToolPromoContent } from "@/features/tools/shared/constants/tool-promo"
+
+export function ToolWorkspaceHero({
+  srOnlyTitle,
+  title,
+  subtitle,
+  description,
+  tags,
+  rightSlot,
+  className,
+}: {
+  srOnlyTitle?: string
+  title: string
+  subtitle?: string
+  description?: string
+  tags?: string[]
+  rightSlot?: React.ReactNode
+  className?: string
+}) {
+  return (
+    <section
+      className={cn(
+        "grid gap-3 rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-4 md:p-5",
+        className
+      )}
+    >
+      <div className="space-y-2.5">
+        {srOnlyTitle ? <h1 className="sr-only">{srOnlyTitle}</h1> : null}
+        <h2 className="text-2xl font-bold text-foreground md:text-3xl">
+          {title}
+        </h2>
+        {subtitle ? (
+          <p className="text-sm font-medium text-muted-foreground md:text-base">
+            {subtitle}
+          </p>
+        ) : null}
+        {description ? (
+          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
+        {tags && tags.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-border bg-background px-2 py-0.5 text-[11px] text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      {rightSlot ? (
+        <aside className="md:min-w-[220px] md:justify-self-end">{rightSlot}</aside>
+      ) : null}
+    </section>
+  )
+}
 
 export function ToolSectionHeading({
   title,
@@ -112,10 +172,10 @@ export function ToolFaqItem({
 }) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <h3 className="text-sm font-semibold leading-6 text-foreground">
+      <h3 className={toolTypography.faqQuestion}>
         {question}
       </h3>
-      <p className="text-sm leading-6 text-muted-foreground/95">{answer}</p>
+      <p className={toolTypography.faqAnswer}>{answer}</p>
     </div>
   )
 }

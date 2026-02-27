@@ -1,7 +1,12 @@
 export const toolTelemetryActions = {
   workspaceNotice: "workspace_notice",
+  capabilityLoad: "capability_load",
   generate: "generate",
+  run: "run",
+  jobPoll: "job_poll",
   exportWord: "export_word",
+  exportImage: "export_image",
+  exportCode: "export_code",
   precheck: "precheck",
   draftHydrated: "draft_hydrated",
 } as const

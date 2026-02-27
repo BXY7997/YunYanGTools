@@ -1,4 +1,5 @@
 import { assertWordExportHtml } from "@/features/tools/shared/services/word-export-guard"
+import { assertWordExportStructuredPolicy } from "@/features/tools/shared/services/word-export-standard-guard"
 import {
   buildTableCaption,
   toolsWordCaptionRules,
@@ -187,6 +188,9 @@ export function createUseCaseDocWordBlob(payload: UseCaseDocExportRequest) {
       "border-bottom:1.5pt solid #000",
       "<table",
     ],
+  })
+  assertWordExportStructuredPolicy(html, {
+    context: "用例说明文档",
   })
   return createWordDocumentBlob(html)
 }

@@ -1,0 +1,6 @@
+export { FilesStorageTabs } from "@/features/tools/files/components/workspace/sections/files-storage-tabs"
+export { FilesToolbar } from "@/features/tools/files/components/workspace/sections/files-toolbar"
+export { FilesTableSection } from "@/features/tools/files/components/workspace/sections/files-table-section"
+export { FilesEditDialog } from "@/features/tools/files/components/workspace/sections/files-edit-dialog"
+export { FilesDeleteDialog } from "@/features/tools/files/components/workspace/sections/files-delete-dialog"
+export { FilesFaqSection } from "@/features/tools/files/components/workspace/sections/files-faq-section"

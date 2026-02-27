@@ -77,6 +77,64 @@ export const toolWorkspaceCopy = {
     copySuccess: "伪代码内容已复制到剪贴板。",
     copyFailed: "复制失败，请检查浏览器剪贴板权限。",
   },
+  coverCard: {
+    initialNotice: "系统准备就绪，可开始生成封面卡片。",
+    sourceLocal: "数据源：本地渲染",
+    generateInputRequired: "请先输入卡片提示词后再生成。",
+    generateMainSuccess: "主卡已生成，可继续导出或扩展候选方案。",
+    generateVariantSuccess: "候选方案已生成，可点击缩略卡切换主卡。",
+    exportSuccess: "封面卡片已导出。",
+  },
+  courseCode: {
+    initialNotice: "系统准备就绪，可输入代码并运行。",
+    sourceLocal: "数据源：本地运行引擎",
+    codeRequired: "请先输入代码后再运行。",
+    languageSwitchApplied: "已按语言切换示例代码。",
+    sampleApplied: "语言示例代码已加载。",
+    runSuccess: "代码运行完成。",
+    runFailed: "代码运行失败，请检查代码结构后重试。",
+    exportSuccess: "源码文件已导出。",
+  },
+  fileCollector: {
+    initialNotice: "系统准备就绪，可开始收集任务。",
+    sourceLocal: "数据源：本地台账引擎",
+    fileRequired: "请先选择待收集文件后再分析。",
+    generateSuccess: "收集台账已生成，可导出和催交。",
+    exportInputRequired: "暂无可导出的收集结果，请先分析。",
+    exportSuccess: "收集结果已导出。",
+    channelInputRequired: "请先填写收集码和分享链接地址。",
+    channelCodeRequired: "收集码为空，无法复制。",
+    channelCodeRefreshed: "已刷新收集码，请同步新的分享链接。",
+    shareLinkCopied: "收集链接已复制。",
+    channelCodeCopied: "收集码已复制。",
+    reminderRequired: "当前没有可复制的催交通知。",
+    reminderCopied: "催交提醒文案已复制。",
+    reminderCopyFailed: "复制失败，请检查浏览器剪贴板权限。",
+  },
+  wallet: {
+    initialNotice: "系统准备就绪，可开始管理钱包余额与账单。",
+    sourceLocal: "数据源：本地钱包中心",
+    dashboardLoaded: "钱包数据已加载。",
+    dashboardFailed: "钱包数据加载失败，请稍后重试。",
+    inviteCodeMissing: "邀请码为空，无法复制。",
+    inviteCodeCopied: "邀请码已复制。",
+    inviteCodeCopyFailed: "复制失败，请检查浏览器剪贴板权限。",
+    amountInvalid: "请输入有效充值金额（至少 1 元）。",
+    rechargeSuccess: "充值成功，余额已更新。",
+    rechargeFailed: "充值失败，请稍后重试。",
+    claimRewardDone: "奖励领取完成。",
+    claimRewardFailed: "奖励领取失败，请稍后重试。",
+    exportSuccess: "钱包账单已导出。",
+  },
+  member: {
+    initialNotice: "系统准备就绪，可开始管理会员权益。",
+    sourceLocal: "数据源：本地会员中心",
+    dashboardLoaded: "会员数据已加载。",
+    dashboardFailed: "会员数据加载失败，请稍后重试。",
+    subscribeSuccess: "会员开通成功。",
+    subscribeFailed: "会员开通失败，请稍后重试。",
+    exportSuccess: "会员总览已导出。",
+  },
 } as const
 
 export const toolApiCopy = {
@@ -140,6 +198,21 @@ export function resolveWorkspaceSourceLabel(
     }
     if (toolId === "pseudo-code") {
       return toolWorkspaceCopy.pseudoCode.sourceLocal
+    }
+    if (toolId === "cover-card") {
+      return toolWorkspaceCopy.coverCard.sourceLocal
+    }
+    if (toolId === "code-runner") {
+      return toolWorkspaceCopy.courseCode.sourceLocal
+    }
+    if (toolId === "file-collector") {
+      return toolWorkspaceCopy.fileCollector.sourceLocal
+    }
+    if (toolId === "wallet") {
+      return toolWorkspaceCopy.wallet.sourceLocal
+    }
+    if (toolId === "member") {
+      return toolWorkspaceCopy.member.sourceLocal
     }
     return fallbackLocalLabel
   }

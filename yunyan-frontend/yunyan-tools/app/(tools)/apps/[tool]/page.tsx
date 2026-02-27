@@ -1,3 +1,4 @@
+import type { ComponentType } from "react"
 import { notFound, redirect } from "next/navigation"
 
 import {
@@ -18,15 +19,71 @@ import { AigcCheckWorkspace } from "@/features/tools/aigc-check"
 import { AigcReduceWorkspace } from "@/features/tools/aigc-reduce"
 import { PaperRewriteWorkspace } from "@/features/tools/paper-rewrite"
 import { PseudoCodeWorkspace } from "@/features/tools/pseudo-code"
+import { CoverCardWorkspace } from "@/features/tools/cover-card"
+import { CodeRunnerWorkspace } from "@/features/tools/code-runner"
+import { FileCollectorWorkspace } from "@/features/tools/file-collector"
+import { FilesWorkspace } from "@/features/tools/files"
+import { MemberWorkspace } from "@/features/tools/member"
+import { WalletWorkspace } from "@/features/tools/wallet"
+import { ErDiagramWorkspace } from "@/features/tools/er-diagram"
+import { FeatureStructureWorkspace } from "@/features/tools/feature-structure"
+import { SoftwareEngineeringWorkspace } from "@/features/tools/software-engineering"
+import { ArchitectureDiagramWorkspace } from "@/features/tools/architecture-diagram"
+import { MindMapWorkspace } from "@/features/tools/mind-map"
+import {
+  parseFilesKeywordParam,
+  parseFilesStorageParam,
+  parseFilesToolFilterParam,
+} from "@/features/tools/files/constants/files-route"
+import {
+  buildWalletRouteWithParams,
+  parseWalletQuickPanelParam,
+  parseWalletWorkspaceViewParam,
+} from "@/features/tools/wallet/constants/wallet-route"
+import type { ToolMenuLinkItem } from "@/types/tools"
+
+type SpecializedWorkspaceProps = {
+  tool: ToolMenuLinkItem
+  groupTitle?: string
+}
+
+const specializedFormWorkspaceByToolId: Record<
+  string,
+  ComponentType<SpecializedWorkspaceProps>
+> = {
+  "sql-to-table": SqlToTableWorkspace,
+  "use-case-doc": UseCaseDocWorkspace,
+  "test-doc": TestDocWorkspace,
+  "word-table": WordTableWorkspace,
+  "aigc-check": AigcCheckWorkspace,
+  "aigc-reduce": AigcReduceWorkspace,
+  "paper-rewrite": PaperRewriteWorkspace,
+  "pseudo-code": PseudoCodeWorkspace,
+  "code-runner": CodeRunnerWorkspace,
+  "cover-card": CoverCardWorkspace,
+  "file-collector": FileCollectorWorkspace,
+  "wallet": WalletWorkspace,
+  "member": MemberWorkspace,
+  "er-diagram": ErDiagramWorkspace,
+  "feature-structure": FeatureStructureWorkspace,
+  "software-engineering": SoftwareEngineeringWorkspace,
+  "architecture-diagram": ArchitectureDiagramWorkspace,
+  "mind-map": MindMapWorkspace,
+}
 
 interface ToolDetailPageProps {
   params: Promise<{
     tool: string
   }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
-export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
+export default async function ToolDetailPage({
+  params,
+  searchParams,
+}: ToolDetailPageProps) {
   const { tool: toolId } = await params
+  const resolvedSearchParams = searchParams ? await searchParams : {}
   const route = `/apps/${toolId}`
   const tool = getToolByRoute(route)
 
@@ -41,36 +98,62 @@ export default async function ToolDetailPage({ params }: ToolDetailPageProps) {
     redirect("/canvas")
   }
 
-  if (tool.id === "sql-to-table") {
-    return <SqlToTableWorkspace tool={tool} groupTitle={group?.title} />
+  if (tool.id === "profile") {
+    redirect(
+      buildWalletRouteWithParams({
+        view: "overview",
+        panel: "account",
+      })
+    )
   }
 
-  if (tool.id === "use-case-doc") {
-    return <UseCaseDocWorkspace tool={tool} groupTitle={group?.title} />
+  const walletInitialView =
+    tool.id === "wallet"
+      ? parseWalletWorkspaceViewParam(resolvedSearchParams.view)
+      : null
+  const walletInitialPanel =
+    tool.id === "wallet"
+      ? parseWalletQuickPanelParam(resolvedSearchParams.panel)
+      : null
+  const filesInitialStorage =
+    tool.id === "files"
+      ? parseFilesStorageParam(resolvedSearchParams.storage)
+      : null
+  const filesInitialFilter =
+    tool.id === "files"
+      ? parseFilesToolFilterParam(resolvedSearchParams.type)
+      : null
+  const filesInitialKeyword =
+    tool.id === "files"
+      ? parseFilesKeywordParam(resolvedSearchParams.q)
+      : null
+
+  if (tool.id === "wallet") {
+    return (
+      <WalletWorkspace
+        tool={tool}
+        groupTitle={group?.title}
+        initialView={walletInitialView || undefined}
+        initialQuickPanelId={walletInitialPanel || undefined}
+      />
+    )
   }
 
-  if (tool.id === "test-doc") {
-    return <TestDocWorkspace tool={tool} groupTitle={group?.title} />
+  if (tool.id === "files") {
+    return (
+      <FilesWorkspace
+        tool={tool}
+        groupTitle={group?.title}
+        initialStorage={filesInitialStorage || undefined}
+        initialToolFilter={filesInitialFilter || undefined}
+        initialKeyword={filesInitialKeyword || undefined}
+      />
+    )
   }
 
-  if (tool.id === "word-table") {
-    return <WordTableWorkspace tool={tool} groupTitle={group?.title} />
-  }
-
-  if (tool.id === "aigc-check") {
-    return <AigcCheckWorkspace tool={tool} groupTitle={group?.title} />
-  }
-
-  if (tool.id === "aigc-reduce") {
-    return <AigcReduceWorkspace tool={tool} groupTitle={group?.title} />
-  }
-
-  if (tool.id === "paper-rewrite") {
-    return <PaperRewriteWorkspace tool={tool} groupTitle={group?.title} />
-  }
-
-  if (tool.id === "pseudo-code") {
-    return <PseudoCodeWorkspace tool={tool} groupTitle={group?.title} />
+  const SpecializedWorkspace = specializedFormWorkspaceByToolId[tool.id]
+  if (SpecializedWorkspace) {
+    return <SpecializedWorkspace tool={tool} groupTitle={group?.title} />
   }
 
   if (tool.workspaceType === "canvas") {

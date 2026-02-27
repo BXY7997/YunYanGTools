@@ -1,7 +1,4 @@
-import { z } from "zod"
-
 import {
-  isToolsApiConfigured,
   toolsApiEndpoints,
 } from "@/features/tools/shared/constants/api-config"
 import {
@@ -14,10 +11,7 @@ import {
   ToolApiError,
   toolsApiClient,
 } from "@/features/tools/shared/services/tool-api-client"
-import {
-  composeVersionNotice,
-  readSchemaVersion,
-} from "@/features/tools/shared/services/tool-api-schema"
+import { shouldUseToolRemote } from "@/features/tools/shared/services/tool-api-runtime"
 import {
   pseudoCodeDefaultPrompt,
   pseudoCodeDefaultRenderConfig,
@@ -25,7 +19,6 @@ import {
 import {
   createPseudoCodeDocumentFromPrompt,
   createPseudoCodeDocumentFromSource,
-  resolveRenderConfig,
 } from "@/features/tools/pseudo-code/services/pseudo-code-engine"
 import {
   createPseudoCodeExportFileName,
@@ -33,9 +26,9 @@ import {
   createPseudoCodeWordFileName,
   createPseudoCodeSvgBlob,
 } from "@/features/tools/pseudo-code/services/pseudo-code-export"
+import { extractPseudoCodeRemoteDocument } from "@/features/tools/pseudo-code/services/pseudo-code-contract"
 import { createPseudoCodeWordBlob } from "@/features/tools/pseudo-code/services/pseudo-code-word-export"
 import type {
-  PseudoCodeDocument,
   PseudoCodeExportRequest,
   PseudoCodeExportResult,
   PseudoCodeGenerateRequest,
@@ -47,152 +40,6 @@ import type {
 interface PseudoCodeActionOptions {
   preferRemote?: boolean
   signal?: AbortSignal
-}
-
-const remotePseudoCodeSchema = z
-  .object({
-    version: z.string().trim().min(1).optional(),
-    msg: z.string().optional(),
-    message: z.string().optional(),
-    data: z.unknown().optional(),
-    result: z.unknown().optional(),
-    content: z.unknown().optional(),
-    code: z.unknown().optional(),
-  })
-  .passthrough()
-
-function shouldUseRemote(preferRemote: boolean | undefined) {
-  if (!preferRemote) {
-    return false
-  }
-  return isToolsApiConfigured()
-}
-
-function toRecord(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null
-  }
-  return value as Record<string, unknown>
-}
-
-function pickString(source: Record<string, unknown> | null, keys: string[]) {
-  if (!source) {
-    return ""
-  }
-
-  for (const key of keys) {
-    const value = source[key]
-    if (typeof value === "string" && value.trim()) {
-      return value.trim()
-    }
-  }
-
-  return ""
-}
-
-function pickBoolean(source: Record<string, unknown> | null, keys: string[]) {
-  if (!source) {
-    return undefined
-  }
-
-  for (const key of keys) {
-    const value = source[key]
-    if (typeof value === "boolean") {
-      return value
-    }
-  }
-
-  return undefined
-}
-
-function pickNumber(source: Record<string, unknown> | null, keys: string[]) {
-  if (!source) {
-    return undefined
-  }
-
-  for (const key of keys) {
-    const value = source[key]
-    const candidate =
-      typeof value === "number"
-        ? value
-        : typeof value === "string"
-          ? Number(value.trim())
-          : NaN
-
-    if (Number.isFinite(candidate)) {
-      return candidate
-    }
-  }
-
-  return undefined
-}
-
-function extractRemoteDocument(value: unknown): PseudoCodeGenerateResponse | null {
-  const validated = remotePseudoCodeSchema.safeParse(value)
-  if (!validated.success) {
-    return null
-  }
-
-  const root = toRecord(validated.data)
-  if (!root) {
-    return null
-  }
-
-  const data =
-    toRecord(root.data) || toRecord(root.result) || toRecord(root.content) || root
-
-  const payload =
-    toRecord(data?.result) ||
-    toRecord(data?.content) ||
-    toRecord(data?.code) ||
-    data
-
-  const sourceText = pickString(payload, [
-    "source",
-    "content",
-    "code",
-    "pseudoCode",
-    "pseudocode",
-    "text",
-  ])
-
-  if (!sourceText) {
-    return null
-  }
-
-  const renderConfig = resolveRenderConfig({
-    showLineNumber: pickBoolean(payload, ["showLineNumber", "show_line_number"]),
-    hideEndKeywords: pickBoolean(payload, ["hideEndKeywords", "hide_end_keywords"]),
-    lineNumberPunc: pickString(payload, ["lineNumberPunc", "line_number_punc"]),
-    indentSize: pickNumber(payload, ["indentSize", "indent_size"]),
-    titlePrefix: pickString(payload, ["titlePrefix", "title_prefix"]),
-    titleCounter: pickNumber(payload, ["titleCounter", "title_counter"]),
-    commentDelimiter: pickString(payload, ["commentDelimiter", "comment_delimiter"]),
-    theme: pickString(payload, ["theme"])
-      ? (pickString(payload, ["theme"]) as PseudoCodeDocument["renderConfig"]["theme"])
-      : undefined,
-  })
-
-  const document = createPseudoCodeDocumentFromSource({
-    source: sourceText,
-    algorithmName: pickString(payload, ["algorithmName", "name", "title"]),
-    renderConfig,
-  })
-
-  const versionNotice = composeVersionNotice(
-    readSchemaVersion(payload) || readSchemaVersion(data) || readSchemaVersion(root)
-  )
-
-  return {
-    document,
-    source: "remote",
-    message: composeNoticeMessage(
-      pickString(payload, ["message", "msg"]) ||
-        pickString(data, ["message", "msg"]) ||
-        toolApiCopy.remoteGenerateDone,
-      versionNotice
-    ),
-  }
 }
 
 function buildLocalDocument(request: PseudoCodeGenerateRequest) {
@@ -217,7 +64,7 @@ export async function generatePseudoCodeData(
 ): Promise<PseudoCodeGenerateResponse> {
   let fallbackNotice = ""
 
-  if (shouldUseRemote(options.preferRemote)) {
+  if (shouldUseToolRemote(options.preferRemote)) {
     try {
       const remoteRawResponse = await toolsApiClient.request<unknown, PseudoCodeGenerateRequest>(
         toolsApiEndpoints.pseudoCode.generate,
@@ -228,7 +75,7 @@ export async function generatePseudoCodeData(
         }
       )
 
-      const remoteResponse = extractRemoteDocument(remoteRawResponse)
+      const remoteResponse = extractPseudoCodeRemoteDocument(remoteRawResponse)
       if (remoteResponse) {
         return remoteResponse
       }
@@ -290,7 +137,7 @@ export async function exportPseudoCodeWord(
     request.fileName?.trim() || createPseudoCodeWordFileName(request.document.title)
   // Keep export deterministic: always use local standardized template.
   return {
-    blob: createPseudoCodeWordBlob(request),
+    blob: await createPseudoCodeWordBlob(request),
     fileName: resolvedFileName,
     source: "local",
     message: toolApiCopy.wordExportSuccess,

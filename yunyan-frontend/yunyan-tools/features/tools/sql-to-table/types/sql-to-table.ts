@@ -59,6 +59,7 @@ export interface SqlToTableExportRequest {
   format: ExportTableFormat
   typeCase: TypeCaseMode
   includeColumns: ExportColumnKey[]
+  captionChapterSerial?: string
   paperTemplateId: SqlToTablePaperTemplateId
   orientationMode?: WordPageOrientationMode
   alignmentMode?: WordCellAlignmentMode

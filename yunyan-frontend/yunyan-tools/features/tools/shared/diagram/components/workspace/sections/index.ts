@@ -1,0 +1,5 @@
+export { DiagramCanvasSection } from "@/features/tools/shared/diagram/components/workspace/sections/diagram-canvas-section"
+export { DiagramConfigSection } from "@/features/tools/shared/diagram/components/workspace/sections/diagram-config-section"
+export { DiagramFooterSection } from "@/features/tools/shared/diagram/components/workspace/sections/diagram-footer-section"
+export { DiagramInputSection } from "@/features/tools/shared/diagram/components/workspace/sections/diagram-input-section"
+export { DiagramToolbarSection } from "@/features/tools/shared/diagram/components/workspace/sections/diagram-toolbar-section"

@@ -1,4 +1,5 @@
 import { assertWordExportHtml } from "@/features/tools/shared/services/word-export-guard"
+import { assertWordExportStructuredPolicy } from "@/features/tools/shared/services/word-export-standard-guard"
 import {
   buildTableCaption,
   toolsWordCaptionRules,
@@ -227,6 +228,9 @@ export function createWordTableWordBlobByFormat(
       "overflow-wrap:anywhere",
       "<table",
     ],
+  })
+  assertWordExportStructuredPolicy(html, {
+    context: "Word表格文档",
   })
 
   return createWordDocumentBlob(html)

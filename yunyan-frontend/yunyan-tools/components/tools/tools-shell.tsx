@@ -16,6 +16,9 @@ import {
 import type { ToolBadge } from "@/types/tools"
 import { cn } from "@/lib/utils"
 import { ToolBadgeChip } from "@/components/tools/tool-badge"
+import { toolsLayoutTokens } from "@/features/tools/shared/constants/tools-layout-tokens"
+import { buildWalletRouteWithParams } from "@/features/tools/wallet/constants/wallet-route"
+import { getToolByRoute, getToolGroupByChildId } from "@/config/tools-registry"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +39,7 @@ import { ToolsSidebar } from "@/components/tools/tools-sidebar"
 interface ToolsShellProps {
   children: React.ReactNode
   initialCollapsed: boolean
+  initialExpandedGroups?: Record<string, boolean> | null
 }
 
 interface WorkspaceQuickMenuItem {
@@ -50,7 +54,10 @@ const workspaceQuickMenus: WorkspaceQuickMenuItem[] = [
     id: "wallet",
     title: "金币",
     icon: Coins,
-    route: "/apps/wallet",
+    route: buildWalletRouteWithParams({
+      view: "recharge",
+      panel: "wallet",
+    }),
   },
   {
     id: "member",
@@ -62,7 +69,10 @@ const workspaceQuickMenus: WorkspaceQuickMenuItem[] = [
     id: "profile",
     title: "个人中心",
     icon: User,
-    route: "/apps/profile",
+    route: buildWalletRouteWithParams({
+      view: "overview",
+      panel: "account",
+    }),
   },
 ]
 
@@ -97,7 +107,10 @@ function WorkspaceQuickMenus() {
     {
       id: "wallet-record",
       title: "消费记录",
-      route: "/apps/wallet",
+      route: buildWalletRouteWithParams({
+        view: "ledger",
+        panel: "orders",
+      }),
       icon: Wallet,
     },
   ]
@@ -168,11 +181,17 @@ function WorkspaceQuickMenus() {
   )
 }
 
-export function ToolsShell({ children, initialCollapsed }: ToolsShellProps) {
+export function ToolsShell({
+  children,
+  initialCollapsed,
+  initialExpandedGroups,
+}: ToolsShellProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = React.useState(initialCollapsed)
   const [sidebarStateReady, setSidebarStateReady] = React.useState(false)
   const [mobileOpen, setMobileOpen] = React.useState(false)
+  const [pendingSidebarFocusItemId, setPendingSidebarFocusItemId] =
+    React.useState<string | null>(null)
   const [workspaceHeaderStatus, setWorkspaceHeaderStatus] =
     React.useState<WorkspaceHeaderStatus | null>(null)
 
@@ -234,6 +253,44 @@ export function ToolsShell({ children, initialCollapsed }: ToolsShellProps) {
     setMobileOpen(false)
   }, [pathname])
 
+  const handleCollapsedItemActivate = React.useCallback((itemId: string) => {
+    setPendingSidebarFocusItemId(itemId)
+    setCollapsed(false)
+  }, [])
+
+  const handlePendingFocusHandled = React.useCallback(() => {
+    setPendingSidebarFocusItemId(null)
+  }, [])
+
+  const fallbackWorkspaceHeaderStatus = React.useMemo<WorkspaceHeaderStatus | null>(() => {
+    if (!pathname.startsWith("/apps/")) {
+      return null
+    }
+
+    const tool = getToolByRoute(pathname)
+    if (!tool) {
+      return null
+    }
+
+    const group = getToolGroupByChildId(tool.id)
+    const breadcrumbs = ["工具大全"]
+    if (group?.title) {
+      breadcrumbs.push(group.title)
+    }
+    breadcrumbs.push(tool.title)
+
+    return {
+      breadcrumbs,
+      badge: tool.badge,
+      savedText: "工作区已就绪",
+      savedAtLabel: "--:--:--",
+      saveModeLabel: "数据源：等待任务",
+    }
+  }, [pathname])
+
+  const resolvedWorkspaceHeaderStatus =
+    workspaceHeaderStatus || fallbackWorkspaceHeaderStatus
+
   return (
     <WorkspaceHeaderStatusContext.Provider value={contextValue}>
       <div className="min-h-screen bg-background text-foreground">
@@ -241,15 +298,28 @@ export function ToolsShell({ children, initialCollapsed }: ToolsShellProps) {
           collapsed={collapsed}
           mobileOpen={mobileOpen}
           onMobileOpenChange={setMobileOpen}
+          initialExpandedGroups={initialExpandedGroups}
+          pendingFocusItemId={pendingSidebarFocusItemId}
+          onPendingFocusHandled={handlePendingFocusHandled}
+          onCollapsedItemActivate={handleCollapsedItemActivate}
         />
         <div
           className={cn(
-            "min-h-screen transition-[padding-left] duration-200 ease-out motion-reduce:transition-none",
-            collapsed ? "md:pl-14" : "md:pl-56"
+            "min-h-screen transition-[padding-left] ease-out motion-reduce:transition-none",
+            toolsLayoutTokens.sidebar.transitionDurationClass,
+            collapsed
+              ? toolsLayoutTokens.sidebar.collapsedPaddingLeftClass
+              : toolsLayoutTokens.sidebar.expandedPaddingLeftClass
           )}
         >
           <header className="sticky top-0 z-20 bg-background/95 backdrop-blur">
-            <div className="flex h-14 items-center gap-3 border-b border-border/80 px-3 md:px-4">
+            <div
+              className={cn(
+                "flex items-center gap-2.5 border-b border-border/80",
+                toolsLayoutTokens.shell.headerHeightClass,
+                toolsLayoutTokens.shell.headerPaddingClass
+              )}
+            >
               <button
                 type="button"
                 onClick={() => setMobileOpen(true)}
@@ -266,15 +336,16 @@ export function ToolsShell({ children, initialCollapsed }: ToolsShellProps) {
               >
                 <ChevronRight
                   className={cn(
-                    "size-3.5 transition-transform duration-200 ease-out motion-reduce:transition-none",
+                    "size-3.5 transition-transform ease-out motion-reduce:transition-none",
+                    toolsLayoutTokens.sidebar.transitionDurationClass,
                     collapsed ? "rotate-0" : "rotate-180"
                   )}
                 />
               </button>
-              {workspaceHeaderStatus ? (
+              {resolvedWorkspaceHeaderStatus ? (
                 <div className="hidden min-w-0 flex-1 items-center gap-2 xl:flex">
                   <div className="inline-flex min-w-0 items-center gap-1.5 rounded-md border border-border bg-muted/30 px-2.5 py-1 text-xs text-muted-foreground">
-                    {workspaceHeaderStatus.breadcrumbs.map(
+                    {resolvedWorkspaceHeaderStatus.breadcrumbs.map(
                       (breadcrumb, index) => (
                         <React.Fragment
                           key={`${breadcrumb}-${index.toString()}`}
@@ -284,7 +355,7 @@ export function ToolsShell({ children, initialCollapsed }: ToolsShellProps) {
                             className={cn(
                               "max-w-56 truncate",
                               index ===
-                                workspaceHeaderStatus.breadcrumbs.length - 1 &&
+                                resolvedWorkspaceHeaderStatus.breadcrumbs.length - 1 &&
                                 "font-medium text-foreground"
                             )}
                             title={breadcrumb}
@@ -294,16 +365,16 @@ export function ToolsShell({ children, initialCollapsed }: ToolsShellProps) {
                         </React.Fragment>
                       )
                     )}
-                    <ToolBadgeChip badge={workspaceHeaderStatus.badge} />
+                    <ToolBadgeChip badge={resolvedWorkspaceHeaderStatus.badge} />
                   </div>
                   <span className="rounded-full border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground">
-                    {workspaceHeaderStatus.saveModeLabel || "本地存储"}
+                    {resolvedWorkspaceHeaderStatus.saveModeLabel || "本地存储"}
                   </span>
                   <span className="hidden rounded-full border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground xl:inline">
-                    上次保存 {workspaceHeaderStatus.savedAtLabel}
+                    上次保存 {resolvedWorkspaceHeaderStatus.savedAtLabel}
                   </span>
                   <span className="rounded-full border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground">
-                    {workspaceHeaderStatus.savedText}
+                    {resolvedWorkspaceHeaderStatus.savedText}
                   </span>
                 </div>
               ) : null}
@@ -313,7 +384,18 @@ export function ToolsShell({ children, initialCollapsed }: ToolsShellProps) {
               </div>
             </div>
           </header>
-          <main className="overflow-x-clip p-3 md:p-4">{children}</main>
+          <main
+            className={cn("overflow-x-clip", toolsLayoutTokens.shell.mainPaddingClass)}
+          >
+            <div
+              className={cn(
+                "mx-auto w-full",
+                toolsLayoutTokens.shell.contentMaxWidthClass
+              )}
+            >
+              {children}
+            </div>
+          </main>
         </div>
       </div>
     </WorkspaceHeaderStatusContext.Provider>

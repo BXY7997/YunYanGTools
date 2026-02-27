@@ -74,6 +74,7 @@ export interface InspectorField {
   id: string
   label: string
   type: InspectorFieldType
+  compact?: boolean
   options?: InspectorFieldOption[]
   min?: number
   max?: number

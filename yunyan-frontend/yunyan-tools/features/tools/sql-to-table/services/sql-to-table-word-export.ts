@@ -1,8 +1,11 @@
-import { sqlToTableColumnHeaderMap } from "@/features/tools/sql-to-table/constants/sql-to-table-config"
+import {
+  sqlToTableColumnHeaderMap,
+  sqlToTableDefaultCaptionChapterSerial,
+} from "@/features/tools/sql-to-table/constants/sql-to-table-config"
 import { assertWordExportHtml } from "@/features/tools/shared/services/word-export-guard"
+import { assertWordExportStructuredPolicy } from "@/features/tools/shared/services/word-export-standard-guard"
 import {
   buildTableCaption,
-  toolsWordCaptionRules,
 } from "@/features/tools/shared/constants/word-caption-config"
 import { resolveWordExportPreset } from "@/features/tools/shared/constants/word-export-presets"
 import {
@@ -21,6 +24,22 @@ import type {
   ExportTableFormat,
   SqlToTableExportRequest,
 } from "@/features/tools/sql-to-table/types/sql-to-table"
+
+const sqlToTableThesisBodyFontFamily =
+  "'Times New Roman','宋体','SimSun',serif"
+const sqlToTableThesisHeaderFontFamily =
+  "'Times New Roman','宋体','SimSun',serif"
+
+function normalizeCaptionChapterSerial(value: string | undefined) {
+  const raw = (value || "").trim()
+  if (!raw) {
+    return sqlToTableDefaultCaptionChapterSerial
+  }
+
+  const sanitized = raw.replace(/[^0-9.]/g, "").replace(/\.{2,}/g, ".")
+  const normalized = sanitized.replace(/^\.+|\.+$/g, "")
+  return normalized || sqlToTableDefaultCaptionChapterSerial
+}
 
 function escapeHtml(value: string | number) {
   return String(value)
@@ -85,7 +104,7 @@ function buildHeaderCells(
         "text-align:center",
         "vertical-align:middle",
         "font-size:10.5pt",
-        "font-family:'黑体','SimHei',sans-serif",
+        `font-family:${sqlToTableThesisHeaderFontFamily}`,
         "font-weight:bold",
         "line-height:1.5",
         `height:${styleSpec.rowHeightCm}cm`,
@@ -122,7 +141,7 @@ function buildBodyRows(
       "text-align:center",
       "vertical-align:middle",
       "font-size:10.5pt",
-      "font-family:'宋体','SimSun',serif",
+      `font-family:${sqlToTableThesisBodyFontFamily}`,
       "line-height:1.5",
       `height:${styleSpec.rowHeightCm}cm`,
       format === "three-line"
@@ -146,7 +165,7 @@ function buildBodyRows(
             `text-align:${layout.align}`,
             "vertical-align:middle",
             "font-size:10.5pt",
-            "font-family:'宋体','SimSun',serif",
+            `font-family:${sqlToTableThesisBodyFontFamily}`,
             "line-height:1.5",
             `height:${styleSpec.rowHeightCm}cm`,
             `word-break:${layout.wordBreak || "break-word"}`,
@@ -187,10 +206,11 @@ function buildTableSection(
   columns: ExportColumnKey[],
   format: ExportTableFormat,
   styleSpec: SqlToTablePaperTemplateSpec,
-  alignmentMode: SqlToTableExportRequest["alignmentMode"]
+  alignmentMode: SqlToTableExportRequest["alignmentMode"],
+  captionChapterSerial: string
 ) {
   const caption = buildTableCaption({
-    serial: `${toolsWordCaptionRules.sqlToTable.chapterSerial}-${tableIndex + 1}`,
+    serial: `${captionChapterSerial}-${tableIndex + 1}`,
     title: tableName,
     spaceAfterLabel: true,
   })
@@ -207,7 +227,7 @@ function buildTableSection(
   }
 
   return `<div style="page-break-inside:auto;margin-bottom:18pt;">
-    <p style="margin:${styleSpec.captionMarginTopPt}pt 0 ${styleSpec.captionMarginBottomPt}pt 0;text-align:center;font-size:10.5pt;line-height:1.5;font-weight:bold;font-family:'黑体','SimHei',sans-serif;">
+    <p style="margin:${styleSpec.captionMarginTopPt}pt 0 ${styleSpec.captionMarginBottomPt}pt 0;text-align:center;font-size:10.5pt;line-height:1.5;font-weight:bold;font-family:${sqlToTableThesisHeaderFontFamily};">
       ${escapeHtml(caption)}
     </p>
     <table cellpadding="0" cellspacing="0" style="${tableStyles.join(";")}">
@@ -222,7 +242,7 @@ function buildTableSection(
     </table>
     ${
       tableComment && tableComment.trim()
-        ? `<p style="margin:4pt 0 0 0;text-align:left;font-size:9pt;line-height:1.4;font-family:'宋体','SimSun',serif;">注：${escapeHtml(tableComment.trim())}</p>`
+        ? `<p style="margin:4pt 0 0 0;text-align:left;font-size:9pt;line-height:1.4;font-family:${sqlToTableThesisBodyFontFamily};">注：${escapeHtml(tableComment.trim())}</p>`
         : ""
     }
   </div>`
@@ -236,6 +256,9 @@ function createWordHtml(
   const styleSpec = resolveStyleSpec(payload.paperTemplateId)
   const preset = resolveWordExportPreset(payload.presetId)
   const alignmentMode = payload.alignmentMode || preset.defaultAlignmentMode
+  const captionChapterSerial = normalizeCaptionChapterSerial(
+    payload.captionChapterSerial
+  )
   const autoOrientation = shouldUseLandscapePage(columns)
     ? "landscape"
     : "portrait"
@@ -255,20 +278,25 @@ function createWordHtml(
         columns,
         payload.format,
         styleSpec,
-        alignmentMode
+        alignmentMode,
+        captionChapterSerial
       )
     })
     .join("")
 
   return createWordHtmlDocument({
-    title: "SQL三线表导出",
+    title: payload.format === "normal" ? "SQL普通表格导出" : "SQL三线表导出",
     bodyHtml: sections,
     orientation,
+    baseFontFamily: "\"Times New Roman\", \"宋体\", \"SimSun\", serif",
   })
 }
 
 export function createSqlToTableWordBlob(payload: SqlToTableExportRequest) {
   const exportColumns = resolveExportColumns(payload.includeColumns)
+  const captionChapterSerial = normalizeCaptionChapterSerial(
+    payload.captionChapterSerial
+  )
   const rowsCollection = payload.tables.map((table) => {
     const previewRows = buildPreviewRows(table, payload.typeCase)
     return previewRows.map((row) => {
@@ -300,9 +328,21 @@ export function createSqlToTableWordBlob(payload: SqlToTableExportRequest) {
     rowsCollection,
     exportColumns
   )
+  const isThreeLine = payload.format === "three-line"
+  const exportContext = isThreeLine ? "SQL三线表" : "SQL普通表格"
+
   assertWordExportHtml(html, {
-    context: "SQL三线表",
-    requiredTokens: ["<html", "@page", "表 1-", "<table", "border-bottom"],
+    context: exportContext,
+    requiredTokens: [
+      "<html",
+      "@page",
+      "<table",
+      `表 ${captionChapterSerial}-`,
+      isThreeLine ? "border-bottom" : "border:",
+    ],
+  })
+  assertWordExportStructuredPolicy(html, {
+    context: exportContext,
   })
 
   return createWordDocumentBlob(html)

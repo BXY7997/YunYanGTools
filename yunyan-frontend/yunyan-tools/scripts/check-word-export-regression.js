@@ -52,6 +52,27 @@ function expectTokens(scope, relativePath, tokens) {
   }
 }
 
+function expectTokensInAnyFile(scope, relativePaths, tokens) {
+  checkCount += 1
+  const files = Array.isArray(relativePaths) ? relativePaths : [relativePaths]
+  const availableFiles = files.filter((file) => readFile(file))
+  if (availableFiles.length === 0) {
+    return
+  }
+
+  const missing = tokens.filter((token) => {
+    return !availableFiles.some((file) => readFile(file).includes(token))
+  })
+
+  if (missing.length > 0) {
+    failures.push(
+      `${scope} -> ${availableFiles.map(normalizePath).join(", ")}: missing tokens: ${missing.join(
+        " | "
+      )}`
+    )
+  }
+}
+
 function expectRegex(scope, relativePath, regex, tip) {
   checkCount += 1
   const content = readFile(relativePath)
@@ -106,7 +127,6 @@ function runConfigSanityChecks() {
 
     const requiredFields = [
       "typeFile",
-      "workspaceFile",
       "exportFile",
       "precheckFile",
       "workspaceTokens",
@@ -120,6 +140,23 @@ function runConfigSanityChecks() {
         failures.push(`config.modules:${moduleConfig.id}: missing field "${field}"`)
       }
     })
+
+    checkCount += 1
+    const hasWorkspaceFile =
+      typeof moduleConfig.workspaceFile === "string" &&
+      moduleConfig.workspaceFile.trim().length > 0
+    const hasWorkspaceFiles =
+      Array.isArray(moduleConfig.workspaceFiles) &&
+      moduleConfig.workspaceFiles.length > 0 &&
+      moduleConfig.workspaceFiles.every(
+        (item) => typeof item === "string" && item.trim().length > 0
+      )
+
+    if (!hasWorkspaceFile && !hasWorkspaceFiles) {
+      failures.push(
+        `config.modules:${moduleConfig.id}: requires "workspaceFile" or non-empty "workspaceFiles"`
+      )
+    }
   })
 
   const scenarioNames = new Set()
@@ -164,13 +201,17 @@ function runSharedChecks() {
 
 function runModuleChecks() {
   regressionConfig.modules.forEach((moduleConfig) => {
+    const workspaceFiles = Array.isArray(moduleConfig.workspaceFiles)
+      ? moduleConfig.workspaceFiles
+      : [moduleConfig.workspaceFile]
+
     expectTokens(`alignment-type:${moduleConfig.id}`, moduleConfig.typeFile, [
       "WordCellAlignmentMode",
       "alignmentMode?: WordCellAlignmentMode",
     ])
-    expectTokens(
+    expectTokensInAnyFile(
       `alignment-workspace:${moduleConfig.id}`,
-      moduleConfig.workspaceFile,
+      workspaceFiles,
       moduleConfig.workspaceTokens
     )
     expectTokens(

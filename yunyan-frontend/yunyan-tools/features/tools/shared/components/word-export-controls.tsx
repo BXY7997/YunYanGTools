@@ -11,6 +11,8 @@ interface WordCellAlignmentSelectorProps {
   idPrefix: string
   title?: string
   showTitle?: boolean
+  showDescription?: boolean
+  compact?: boolean
   className?: string
   radioGroupClassName?: string
   optionClassName?: string
@@ -24,6 +26,8 @@ export function WordCellAlignmentSelector({
   idPrefix,
   title = "单元格对齐策略",
   showTitle = true,
+  showDescription = true,
+  compact = false,
   className,
   radioGroupClassName,
   optionClassName,
@@ -37,7 +41,9 @@ export function WordCellAlignmentSelector({
         value={value}
         onValueChange={(next) => onValueChange(next as WordCellAlignmentMode)}
         className={cn(
-          "flex flex-wrap items-center gap-x-5 gap-y-2",
+          compact
+            ? "flex flex-wrap items-center gap-x-3 gap-y-1.5"
+            : "flex flex-wrap items-center gap-x-5 gap-y-2",
           showTitle ? "mt-2" : undefined,
           radioGroupClassName
         )}
@@ -50,21 +56,25 @@ export function WordCellAlignmentSelector({
               key={option.value}
               htmlFor={optionId}
               className={cn(
-                "flex cursor-pointer items-center gap-2 text-sm text-foreground",
+                compact
+                  ? "flex cursor-pointer items-center gap-1.5 text-xs text-foreground"
+                  : "flex cursor-pointer items-center gap-2 text-sm text-foreground",
                 optionClassName
               )}
             >
               <RadioGroupItem value={option.value} id={optionId} />
               <span>{option.label}</span>
-              {inlineDescription ? (
-                <span className={cn("ml-1 text-xs text-muted-foreground", descriptionClassName)}>
-                  ({option.description})
-                </span>
-              ) : (
-                <span className={cn("text-xs text-muted-foreground", descriptionClassName)}>
-                  {option.description}
-                </span>
-              )}
+              {showDescription ? (
+                inlineDescription ? (
+                  <span className={cn("ml-1 text-xs text-muted-foreground", descriptionClassName)}>
+                    ({option.description})
+                  </span>
+                ) : (
+                  <span className={cn("text-xs text-muted-foreground", descriptionClassName)}>
+                    {option.description}
+                  </span>
+                )
+              ) : null}
             </label>
           )
         })}

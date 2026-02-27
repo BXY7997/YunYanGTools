@@ -4,6 +4,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { cn } from "@/lib/utils"
 import { WordCellAlignmentSelector } from "@/features/tools/shared/components/word-export-controls"
 import { wordOrientationOptions } from "@/features/tools/shared/constants/word-export"
+import { wordExportAcademicNoticeCopy } from "@/features/tools/shared/constants/word-export-standard"
 import type {
   WordCellAlignmentMode,
   WordPageOrientationMode,
@@ -24,6 +25,10 @@ interface WordExportConfigPanelProps {
   alignmentTitle?: string
   alignmentShowTitle?: boolean
   alignmentInlineDescription?: boolean
+  showOrientationDescription?: boolean
+  showAlignmentDescription?: boolean
+  showConfigHint?: boolean
+  compact?: boolean
 }
 
 export function WordExportConfigPanel({
@@ -41,9 +46,20 @@ export function WordExportConfigPanel({
   alignmentTitle = "单元格对齐策略",
   alignmentShowTitle = true,
   alignmentInlineDescription = false,
+  showOrientationDescription = true,
+  showAlignmentDescription = true,
+  showConfigHint = true,
+  compact = false,
 }: WordExportConfigPanelProps) {
   return (
-    <div className={cn("space-y-2 rounded-md border border-border/70 bg-background/40 px-3 py-2", className)}>
+    <div
+      className={cn(
+        compact
+          ? "space-y-1.5 rounded-md border border-border/70 bg-background/35 px-2.5 py-2"
+          : "space-y-2 rounded-md border border-border/70 bg-background/40 px-3 py-2",
+        className
+      )}
+    >
       {(orientationShowTitle || onClearDraft) && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           {orientationShowTitle ? (
@@ -63,31 +79,37 @@ export function WordExportConfigPanel({
         </div>
       )}
 
-      {!orientationShowTitle ? (
-        <p className="text-sm font-medium text-foreground">{orientationTitle}</p>
-      ) : null}
-
       <RadioGroup
         value={orientationMode}
         onValueChange={(value) => onOrientationChange(value as WordPageOrientationMode)}
-        className="flex flex-wrap items-center gap-x-5 gap-y-2"
+        className={cn(
+          compact
+            ? "flex flex-wrap items-center gap-x-3 gap-y-1.5"
+            : "flex flex-wrap items-center gap-x-5 gap-y-2"
+        )}
       >
         {wordOrientationOptions.map((option) => (
           <label
             key={option.value}
             htmlFor={`${idPrefix}-orientation-${option.value}`}
-            className="flex cursor-pointer items-center gap-2 text-sm text-foreground"
+            className={cn(
+              compact
+                ? "flex cursor-pointer items-center gap-1.5 text-xs text-foreground"
+                : "flex cursor-pointer items-center gap-2 text-sm text-foreground"
+            )}
           >
             <RadioGroupItem
               value={option.value}
               id={`${idPrefix}-orientation-${option.value}`}
             />
             <span>{option.label}</span>
-            {orientationInlineDescription ? (
-              <span className="text-xs text-muted-foreground">({option.description})</span>
-            ) : (
-              <span className="text-xs text-muted-foreground">{option.description}</span>
-            )}
+            {showOrientationDescription ? (
+              orientationInlineDescription ? (
+                <span className="text-xs text-muted-foreground">({option.description})</span>
+              ) : (
+                <span className="text-xs text-muted-foreground">{option.description}</span>
+              )
+            ) : null}
           </label>
         ))}
       </RadioGroup>
@@ -98,8 +120,16 @@ export function WordExportConfigPanel({
         idPrefix={`${idPrefix}-alignment`}
         title={alignmentTitle}
         showTitle={alignmentShowTitle}
+        showDescription={showAlignmentDescription}
+        compact={compact}
         inlineDescription={alignmentInlineDescription}
       />
+
+      {showConfigHint ? (
+        <p className="rounded-md border border-dashed border-border/70 bg-muted/35 px-2.5 py-2 text-xs leading-5 text-muted-foreground">
+          {wordExportAcademicNoticeCopy.configHint}
+        </p>
+      ) : null}
     </div>
   )
 }

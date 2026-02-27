@@ -14,9 +14,11 @@
 - `features/tools/*/components/*-workspace.tsx`
 - `features/tools/shared/constants/word-export.ts`
 - `features/tools/shared/constants/word-export-presets.ts`
+- `features/tools/shared/constants/word-export-standard.ts`
 - `features/tools/shared/components/word-export-controls.tsx`
 - `features/tools/shared/components/word-export-config-panel.tsx`
 - `features/tools/shared/services/word-export-engine.ts`
+- `features/tools/shared/services/word-export-standard-guard.ts`
 
 ## 统一约束
 
@@ -46,6 +48,15 @@
 6. 三线表与普通表：
 - 三线表只保留顶线/中线/底线，辅助线按模块规则增设。
 - 普通表格保留完整边框；同一工具导出两种格式时，内容结构必须一致。
+
+7. 单路径导出与失败策略：
+- 预览、图片、Word 必须共享同一渲染主路径。
+- 禁止同一模块维护多套导出算法。
+- 导出失败采用 fail-fast 策略，返回可读错误信息，不回退到“原文直接导出”。
+
+8. Word 结构化策略：
+- Word 导出正文必须是结构化元素（表格/段落），禁止图片式正文导出。
+- 导出模板必须通过结构策略校验：包含表格结构标记，且不包含图片式正文标记。
 
 ## 模块基线矩阵
 

@@ -16,6 +16,7 @@ const developmentFallback = {
   STRIPE_WEBHOOK_SECRET: "whsec_dev_placeholder",
   STRIPE_PRO_MONTHLY_PLAN_ID: "price_dev_placeholder",
   NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3001",
+  NEXT_PUBLIC_MARKETING_GITHUB_STARS: "22.4k",
 }
 
 export const env = createEnv({
@@ -38,6 +39,7 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().min(1),
+    NEXT_PUBLIC_MARKETING_GITHUB_STARS: z.string().optional(),
   },
   runtimeEnv: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
@@ -86,5 +88,10 @@ export const env = createEnv({
     NEXT_PUBLIC_APP_URL:
       process.env.NEXT_PUBLIC_APP_URL ||
       (!isProduction ? developmentFallback.NEXT_PUBLIC_APP_URL : undefined),
+    NEXT_PUBLIC_MARKETING_GITHUB_STARS:
+      process.env.NEXT_PUBLIC_MARKETING_GITHUB_STARS ||
+      (!isProduction
+        ? developmentFallback.NEXT_PUBLIC_MARKETING_GITHUB_STARS
+        : undefined),
   },
 })

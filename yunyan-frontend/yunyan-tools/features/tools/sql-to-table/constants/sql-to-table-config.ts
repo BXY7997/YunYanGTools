@@ -5,6 +5,7 @@ import type {
   SqlToTableMode,
   TypeCaseMode,
 } from "@/features/tools/sql-to-table/types/sql-to-table"
+import { toolsWordCaptionRules } from "@/features/tools/shared/constants/word-caption-config"
 import {
   sqlToTableDefaultPaperTemplateId,
   sqlToTablePaperTemplateOptions,
@@ -174,6 +175,9 @@ export const sqlToTableDefaultColumns: ExportColumnKey[] = [
   "primary",
   "remark",
 ]
+
+export const sqlToTableDefaultCaptionChapterSerial =
+  toolsWordCaptionRules.sqlToTable.chapterSerial
 
 export const sqlToTableSeoParagraph =
   "本工具是一款专业的SQL转Word工具，支持数据库DDL语句一键转换为规范的三线表格式Word文档。无论你是在准备计算机毕业论文中的数据库设计章节、编写系统设计文档，还是整理数据库技术方案，都能通过本工具快速生成符合学术规范的三线表。支持MySQL、PostgreSQL等主流数据库语法，提供自定义列选择、类型大小写配置、普通表格/三线表切换等功能。"

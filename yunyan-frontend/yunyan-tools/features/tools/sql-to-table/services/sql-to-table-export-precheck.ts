@@ -11,6 +11,7 @@ import type {
   WordPageOrientationMode,
 } from "@/features/tools/shared/types/word-export"
 import { defaultWordExportPresetId } from "@/features/tools/shared/constants/word-export-presets"
+import { wordExportAcademicNoticeCopy } from "@/features/tools/shared/constants/word-export-standard"
 
 interface SqlToTablePrecheckParams {
   tables: SqlTableSchema[]
@@ -83,12 +84,13 @@ export function getSqlToTableExportPrecheckNotices({
     notices.push("三线表建议保留“序号”列，便于论文正文引用。")
   }
 
+  // 论文排版建议：正文优先按语义对齐而非全部居中。
   if (alignmentMode === "all-center") {
-    notices.push("当前已启用全部居中；如需更严格论文排版，建议切换为论文标准对齐。")
+    notices.push(wordExportAcademicNoticeCopy.allCenter)
   }
 
   if (presetId !== "thesis-standard") {
-    notices.push("当前导出预设非论文标准，若用于学术提交建议切换论文标准预设。")
+    notices.push(wordExportAcademicNoticeCopy.nonThesisPreset)
   }
 
   return notices

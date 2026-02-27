@@ -73,6 +73,27 @@ const moduleOverridesByRoute: Partial<Record<string, Partial<ToolWorkspaceModule
       faqItem: true,
       checklistCard: false,
     },
+    "/apps/cover-card": {
+      promoNotice: true,
+      sectionHeading: true,
+      aiDisclaimer: true,
+      faqItem: true,
+      checklistCard: true,
+    },
+    "/apps/code-runner": {
+      promoNotice: true,
+      sectionHeading: true,
+      aiDisclaimer: false,
+      faqItem: true,
+      checklistCard: true,
+    },
+    "/apps/file-collector": {
+      promoNotice: true,
+      sectionHeading: true,
+      aiDisclaimer: false,
+      faqItem: true,
+      checklistCard: true,
+    },
   }
 
 export function resolveToolWorkspaceModules(route: string): ToolWorkspaceModules {
